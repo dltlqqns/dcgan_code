@@ -17,26 +17,26 @@ from theano.sandbox.cuda.dnn import dnn_conv
 from lib import activations
 from lib import updates
 from lib import inits
-from lib.vis import grayscale_grid_vis
+from lib.vis import color_grid_vis
 from lib.rng import py_rng, np_rng
 from lib.ops import batchnorm, conv_cond_concat, deconv, dropout
 from lib.theano_utils import floatX, sharedX
 from lib.data_utils import OneHot, shuffle, iter_data
 from lib.metrics import nnc_score, nnd_score
 
-from load import mnist_with_valid_set
+from load import load_cifar10 
 
-trX, vaX, teX, trY, vaY, teY = mnist_with_valid_set()
+trX, vaX, teX, trY, vaY, teY = load_cifar10()
 
 vaX = floatX(vaX)/255.
 
 k = 1             # # of discrim updates for each gen update
 l2 = 2.5e-5       # l2 weight decay
 b1 = 0.5          # momentum term of adam
-nc = 1            # # of channels in image
+nc = 3            # # of channels in image
 ny = 10           # # of classes
 nbatch = 128      # # of examples in batch
-npx = 28          # # of pixels width/height of images
+npx = 32        # # of pixels width/height of images
 nz = 100          # # of dim for Z
 ngfc = 1024       # # of gen units for fully connected layers
 ndfc = 1024       # # of discrim units for fully connected layers
@@ -147,7 +147,7 @@ print('%.2f seconds to compile theano functions'%(time()-t))
 tr_idxs = np.arange(len(trX))
 trX_vis = np.asarray([[trX[i] for i in py_rng.sample(tr_idxs[trY==y], 20)] for y in range(10)]).reshape(200, -1)
 trX_vis = inverse_transform(transform(trX_vis))
-grayscale_grid_vis(trX_vis, (10, 20), 'samples/%s_etl_test.png'%desc)
+#color_grid_vis(trX_vis, (1, 1), 'samples/%s_etl_test.png'%desc)
 
 sample_zmb = floatX(np_rng.uniform(-1., 1., size=(200, nz)))
 sample_ymb = floatX(OneHot(np.asarray([[i for _ in range(20)] for i in range(10)]).flatten(), ny))
@@ -223,7 +223,7 @@ for epoch in range(1, niter+niter_decay+1):
         f_log.flush()
 
     samples = np.asarray(_gen(sample_zmb, sample_ymb))
-    grayscale_grid_vis(inverse_transform(samples), (10, 20), 'samples/%s/%d.png'%(desc, n_epochs))
+    color_grid_vis(inverse_transform(samples), (10, 10), 'samples/%s/%d.png'%(desc, n_epochs))
     n_epochs += 1
     if n_epochs > niter:
         lrt.set_value(floatX(lrt.get_value() - lr/niter_decay))

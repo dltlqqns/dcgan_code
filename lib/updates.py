@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/home/yumin/codes/dcgan_code')
+sys.path.append('/home/yumin/codes/dcgan_code/lib')
 import theano
 import theano.tensor as T
 import numpy as np
