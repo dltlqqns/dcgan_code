@@ -36,10 +36,10 @@ b1 = 0.5          # momentum term of adam
 nc = 3            # # of channels in image
 ny = 10           # # of classes
 nbatch = 128      # # of examples in batch
-npx = 32          # # of pixels width/height of images
+npx = 64          # # of pixels width/height of images
 nz = 100          # # of dim for Z
-ngf = 256          # # of gen filters in first conv layer
-ndf = 256          # # of discrim filters in first conv layer
+ngf = 128          # # of gen filters in first conv layer
+ndf = 128          # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
 niter = 100       # # of iter at starting learning rate
 niter_decay = 100 # # of iter to linearly decay learning rate to zero
@@ -76,18 +76,18 @@ difn = inits.Normal(scale=0.02)
 gain_ifn = inits.Normal(loc=1., scale=0.02)
 bias_ifn = inits.Constant(c=0.)
 
-gw  = gifn((nz+ny, ngf*4*4*4), 'gw')
-gg = gain_ifn((ngf*4*4*4), 'gg')
-gb = bias_ifn((ngf*4*4*4), 'gb')
-gw2 = gifn((ngf*4+ny, ngf*2, 5, 5), 'gw2')
-gg2 = gain_ifn((ngf*2), 'gg2')
-gb2 = bias_ifn((ngf*2), 'gb2')
-gw3 = gifn((ngf*2+ny, ngf, 5, 5), 'gw3')
-gg3 = gain_ifn((ngf), 'gg3')
-gb3 = bias_ifn((ngf), 'gb3')
-#gw4 = gifn((ngf*2+ny, ngf, 5, 5), 'gw4')
-#gg4 = gain_ifn((ngf), 'gg4')
-#gb4 = bias_ifn((ngf), 'gb4')
+gw  = gifn((nz+ny, ngf*8*4*4), 'gw')
+gg = gain_ifn((ngf*8*4*4), 'gg')
+gb = bias_ifn((ngf*8*4*4), 'gb')
+gw2 = gifn((ngf*8+ny, ngf*4, 5, 5), 'gw2')
+gg2 = gain_ifn((ngf*4), 'gg2')
+gb2 = bias_ifn((ngf*4), 'gb2')
+gw3 = gifn((ngf*4+ny, ngf*2, 5, 5), 'gw3')
+gg3 = gain_ifn((ngf*2), 'gg3')
+gb3 = bias_ifn((ngf*2), 'gb3')
+gw4 = gifn((ngf*2+ny, ngf, 5, 5), 'gw4')
+gg4 = gain_ifn((ngf), 'gg4')
+gb4 = bias_ifn((ngf), 'gb4')
 gwx = gifn((ngf+ny, nc, 5, 5), 'gwx')
 
 dw  = difn((ndf, nc+ny, 5, 5), 'dw')
@@ -97,33 +97,30 @@ db2 = bias_ifn((ndf*2), 'db2')
 dw3 = difn((ndf*4, ndf*2+ny, 5, 5), 'dw3')
 dg3 = gain_ifn((ndf*4), 'dg3')
 db3 = bias_ifn((ndf*4), 'db3')
-#dw4 = difn((ndf*8, ndf*4+ny, 5, 5), 'dw4')
-#dg4 = gain_ifn((ndf*8), 'dg4')
-#db4 = bias_ifn((ndf*8), 'db4')
-#dwy = difn((ndf*8*4*4+ny, 1), 'dwy')
-dwy = difn((ndf*4*4*4+ny, 1), 'dwy')
+dw4 = difn((ndf*8, ndf*4+ny, 5, 5), 'dw4')
+dg4 = gain_ifn((ndf*8), 'dg4')
+db4 = bias_ifn((ndf*8), 'db4')
+dwy = difn((ndf*8*4*4+ny, 1), 'dwy')
 
-#gen_params = [gw, gg, gb, gw2, gg2, gb2, gw3, gg3, gb3, gw4, gg4, gb4, gwx]
-#discrim_params = [dw, dw2, dg2, db2, dw3, dg3, db3, dw4, dg4, db4, dwy]
-gen_params = [gw, gg, gb, gw2, gg2, gb2, gw3, gg3, gb3, gwx]
-discrim_params = [dw, dw2, dg2, db2, dw3, dg3, db3, dwy]
+gen_params = [gw, gg, gb, gw2, gg2, gb2, gw3, gg3, gb3, gw4, gg4, gb4, gwx]
+discrim_params = [dw, dw2, dg2, db2, dw3, dg3, db3, dw4, dg4, db4, dwy]
 
-def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, wx):
+def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
     yb = Y.dimshuffle(0, 1, 'x', 'x')
     Z = T.concatenate([Z, Y], axis=1)
     h = relu(batchnorm(T.dot(Z, w), g=g, b=b))
-    h = h.reshape((h.shape[0], ngf*4, 4, 4))
+    h = h.reshape((h.shape[0], ngf*8, 4, 4))
     h = conv_cond_concat(h, yb)
     h2 = relu(batchnorm(deconv(h, w2, subsample=(2, 2), border_mode=(2, 2)), g=g2, b=b2))
     h2 = conv_cond_concat(h2, yb)
     h3 = relu(batchnorm(deconv(h2, w3, subsample=(2, 2), border_mode=(2, 2)), g=g3, b=b3))
     h3 = conv_cond_concat(h3, yb)
-    #h4 = relu(batchnorm(deconv(h3, w4, subsample=(2, 2), border_mode=(2, 2)), g=g4, b=b4))
-    #h4 = conv_cond_concat(h4, yb)
-    x = tanh(deconv(h3, wx, subsample=(2, 2), border_mode=(2, 2)))
+    h4 = relu(batchnorm(deconv(h3, w4, subsample=(2, 2), border_mode=(2, 2)), g=g4, b=b4))
+    h4 = conv_cond_concat(h4, yb)
+    x = tanh(deconv(h4, wx, subsample=(2, 2), border_mode=(2, 2)))
     return x
 
-def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, wy):
+def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, wy):
     yb = Y.dimshuffle(0, 1, 'x', 'x')
     X = conv_cond_concat(X, yb)
     h = lrelu(dnn_conv(X, w, subsample=(2, 2), border_mode=(2, 2)))
@@ -131,11 +128,11 @@ def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, wy):
     h2 = lrelu(batchnorm(dnn_conv(h, w2, subsample=(2, 2), border_mode=(2, 2)), g=g2, b=b2))
     h2 = conv_cond_concat(h2, yb)
     h3 = lrelu(batchnorm(dnn_conv(h2, w3, subsample=(2, 2), border_mode=(2, 2)), g=g3, b=b3))
-    #h3 = conv_cond_concat(h3, yb)
-    #h4 = lrelu(batchnorm(dnn_conv(h3, w4, subsample=(2, 2), border_mode=(2, 2)), g=g4, b=b4))
-    h3 = T.flatten(h3, 2)
-    h3 = T.concatenate([h3, Y], axis=1)
-    y = sigmoid(T.dot(h3, wy))
+    h3 = conv_cond_concat(h3, yb)
+    h4 = lrelu(batchnorm(dnn_conv(h3, w4, subsample=(2, 2), border_mode=(2, 2)), g=g4, b=b4))
+    h4 = T.flatten(h4, 2)
+    h4 = T.concatenate([h4, Y], axis=1)
+    y = sigmoid(T.dot(h4, wy))
     return y
 
 X = T.tensor4()

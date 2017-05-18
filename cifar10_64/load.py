@@ -8,12 +8,14 @@ from collections import Counter
 import random
 from matplotlib import pyplot as plt
 import pickle
+import scipy.misc
 
 from lib.data_utils import shuffle
 from lib.config import data_dir
 
 NUM_IMG_PER_CLASS = 500
 NUM_CLASS = 10
+IMG_SIZE = 64
 
 def cifar10():
     ### train ###
@@ -36,8 +38,9 @@ def cifar10():
             print('labels:')
             print(len(labels))
 
-    trX = imgs
-    #trX = imgs.reshape(NUM_IMG_PER_CLASS*NUM_CLASS,3,32,32).transpose((0,2,3,1))
+    trX = imgs.reshape(-1,3,32,32).transpose((0,2,3,1))
+    trX_re = [scipy.misc.imresize(img, [IMG_SIZE, IMG_SIZE]) for img in trX]
+    trX = np.array(trX_re).transpose((0,3,1,2)).reshape(-1, IMG_SIZE*IMG_SIZE*3)
     trY = labels
     print("trX")
     print(trX.shape)
@@ -57,8 +60,9 @@ def cifar10():
     labels = np.array(labels)
     labels = labels[sel]
 
-    teX = imgs
-    #teX = imgs.reshape(NUM_IMG_PER_CLASS*2,3,32,32).transpose((0,2,3,1))
+    teX = imgs.reshape(-1,3,32,32).transpose((0,2,3,1))
+    teX_re = [scipy.misc.imresize(img, [IMG_SIZE, IMG_SIZE]) for img in teX]
+    teX = np.array(teX_re).transpose((0,3,1,2)).reshape(-1, IMG_SIZE*IMG_SIZE*3)
     teY = labels
     print("teX")
     print(teX.shape)
