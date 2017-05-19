@@ -1,1 +1,1 @@
-data_dir = '/home/yumin/dataset/cifar-10-batches-py'
+data_dir = '/home/yumin/dataset/mnist'
