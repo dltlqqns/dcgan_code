@@ -26,7 +26,8 @@ from lib.metrics import nnc_score, nnd_score
 
 from load import load_cifar10 
 
-trX, vaX, teX, trY, vaY, teY = load_cifar10()
+nsample_per_class = 1000
+trX, vaX, teX, trY, vaY, teY = load_cifar10(nsample_per_class)
 
 vaX = floatX(vaX)/127.5 - 1.
 
@@ -55,7 +56,7 @@ def inverse_transform(X):
     X = (X.reshape(-1, nc, npx, npx).transpose(0,2,3,1)+1)*127.5
     return X
 
-desc = 'cond_dcgan'
+desc = 'cond_dcgan_%d'%nsample_per_class
 model_dir = 'models/%s'%desc
 samples_dir = 'samples/%s'%desc
 if not os.path.exists('logs/'):

@@ -13,11 +13,11 @@ import scipy.misc
 from lib.data_utils import shuffle
 from lib.config import data_dir
 
-NUM_IMG_PER_CLASS = 500
+#NUM_IMG_PER_CLASS = 200
 NUM_CLASS = 10
 IMG_SIZE = 64
 
-def cifar10():
+def cifar10(nsample_per_class):
     ### train ###
     print("train")
     imgs = np.empty(shape=[0,3072])
@@ -27,7 +27,7 @@ def cifar10():
         print(filename)
         with open(os.path.join(data_dir, filename),'rb') as f:
             tmp = pickle.load(f)
-            sel = np.random.permutation(10000)[:NUM_IMG_PER_CLASS*2*6/5]
+            sel = np.random.permutation(10000)[:nsample_per_class*2*6/5]
             imgs_sel = tmp['data'][sel]
             labels_sel = np.array(tmp['labels'])[sel]
             imgs = np.concatenate((imgs, imgs_sel), axis=0)
@@ -55,7 +55,7 @@ def cifar10():
         tmp = pickle.load(f)
         imgs = tmp['data']
         labels = tmp['labels']
-    sel = np.random.permutation(10000)[:NUM_IMG_PER_CLASS*2]
+    sel = np.random.permutation(10000)[:nsample_per_class*2]
     imgs = imgs[sel]
     labels = np.array(labels)
     labels = labels[sel]
@@ -73,13 +73,13 @@ def cifar10():
 
     return trX, teX, trY, teY
 
-def load_cifar10():
-    trX, teX, trY, teY = cifar10()
+def load_cifar10(nsample_per_class):
+    trX, teX, trY, teY = cifar10(nsample_per_class)
 
     trX, trY = shuffle(trX, trY)
-    vaX = trX[NUM_IMG_PER_CLASS*NUM_CLASS:]
-    vaY = trY[NUM_IMG_PER_CLASS*NUM_CLASS:]
-    trX = trX[:NUM_IMG_PER_CLASS*NUM_CLASS]
-    trY = trY[:NUM_IMG_PER_CLASS*NUM_CLASS]
+    vaX = trX[nsample_per_class*NUM_CLASS:]
+    vaY = trY[nsample_per_class*NUM_CLASS:]
+    trX = trX[:nsample_per_class*NUM_CLASS]
+    trY = trY[:nsample_per_class*NUM_CLASS]
 
     return trX, vaX, teX, trY, vaY, teY
