@@ -24,9 +24,10 @@ from lib.theano_utils import floatX, sharedX
 from lib.data_utils import OneHot, shuffle, iter_data, center_crop
 from lib.metrics import nnc_score, nnd_score
 
-from load import load_web500
+from load import load_web
 
-trX, vaX, teX, trY, vaY, teY = load_web500()
+nsample_per_class = 1000
+trX, vaX, teX, trY, vaY, teY = load_web(nsample_per_class)
 
 vaX = floatX(vaX)/127.5 - 1.
 
@@ -41,8 +42,8 @@ nz = 100          # # of dim for Z
 ngf = 128          # # of gen filters in first conv layer
 ndf = 128          # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
-niter = 100       # # of iter at starting learning rate
-niter_decay = 100 # # of iter to linearly decay learning rate to zero
+niter = 200       # # of iter at starting learning rate
+niter_decay = 200 # # of iter to linearly decay learning rate to zero
 lr = 0.0002       # initial learning rate for adam
 ntrain, nval, ntest = len(trX), len(vaX), len(teX)
 
@@ -55,7 +56,7 @@ def inverse_transform(X):
     X = (X.reshape(-1, nc, npx, npx).transpose(0,2,3,1)+1)*127.5
     return X
 
-desc = 'cond_dcgan'
+desc = 'cond_dcgan_%d'%(nsample_per_class)
 model_dir = 'models/%s'%desc
 samples_dir = 'samples/%s'%desc
 if not os.path.exists('logs/'):

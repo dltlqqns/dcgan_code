@@ -1,4 +1,5 @@
 *pyc
+**/*.pyc
 logs/
 models/
 samples/
