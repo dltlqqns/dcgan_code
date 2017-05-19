@@ -15,7 +15,7 @@ from lib.config import data_dir
 
 IMG_SIZE = 64
 NUM_CHANNEL = 3
-data_dir = '/home/yumin/codes/StackGAN/Data/web200'
+data_dir = '/home/yumin/codes/StackGAN/Data/web500'
 
 def web500():
     ### train ###
