@@ -10,8 +10,9 @@ from matplotlib import pyplot as plt
 import pickle
 
 from lib.data_utils import shuffle
-from lib.config import data_dir
+from lib.config import data_dir_cifar10
 
+USE_ALL = True
 NUM_IMG_PER_CLASS = 500
 NUM_CLASS = 10
 
@@ -23,9 +24,13 @@ def cifar10():
     for i in range(1,6):
         filename = 'data_batch_%d'%i
         print(filename)
-        with open(os.path.join(data_dir, filename),'rb') as f:
+        with open(os.path.join(data_dir_cifar10, filename),'rb') as f:
             tmp = pickle.load(f)
-            sel = np.random.permutation(10000)[:NUM_IMG_PER_CLASS*2*6/5]
+            if USE_ALL:
+                print("use all training set (C):")
+                sel = np.random.permutation(10000)
+            else:
+                sel = np.random.permutation(10000)[:NUM_IMG_PER_CLASS*2*6/5]
             imgs_sel = tmp['data'][sel]
             labels_sel = np.array(tmp['labels'])[sel]
             imgs = np.concatenate((imgs, imgs_sel), axis=0)
@@ -48,11 +53,15 @@ def cifar10():
 
     ### test ###
     print("test")
-    with open(os.path.join(data_dir, 'test_batch'), 'rb') as f:
+    with open(os.path.join(data_dir_cifar10, 'test_batch'), 'rb') as f:
         tmp = pickle.load(f)
         imgs = tmp['data']
         labels = tmp['labels']
-    sel = np.random.permutation(10000)[:NUM_IMG_PER_CLASS*2]
+    if USE_ALL:
+        print("use all training set (C):")
+        sel = np.random.permutation(10000)
+    else:
+        sel = np.random.permutation(10000)[:NUM_IMG_PER_CLASS*2]
     imgs = imgs[sel]
     labels = np.array(labels)
     labels = labels[sel]
@@ -73,9 +82,16 @@ def load_cifar10():
     trX, teX, trY, teY = cifar10()
 
     trX, trY = shuffle(trX, trY)
-    vaX = trX[NUM_IMG_PER_CLASS*NUM_CLASS:]
-    vaY = trY[NUM_IMG_PER_CLASS*NUM_CLASS:]
-    trX = trX[:NUM_IMG_PER_CLASS*NUM_CLASS]
-    trY = trY[:NUM_IMG_PER_CLASS*NUM_CLASS]
+    if USE_ALL:
+        print("use all training set (C):")
+        vaX = trX[-100:]
+        vaY = trY[-100:]
+        trX = trX[:-100]
+        trY = trY[:-100]
+    else:
+        vaX = trX[NUM_IMG_PER_CLASS*NUM_CLASS:]
+        vaY = trY[NUM_IMG_PER_CLASS*NUM_CLASS:]
+        trX = trX[:NUM_IMG_PER_CLASS*NUM_CLASS]
+        trY = trY[:NUM_IMG_PER_CLASS*NUM_CLASS]
 
     return trX, vaX, teX, trY, vaY, teY
