@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 import pickle
 
 from lib.data_utils import shuffle
-from lib.config import data_dir
+from lib.config import data_dir_cifar10
 
 USE_ALL = True
 NUM_IMG_PER_CLASS = 500
@@ -24,7 +24,7 @@ def cifar10():
     for i in range(1,6):
         filename = 'data_batch_%d'%i
         print(filename)
-        with open(os.path.join(data_dir, filename),'rb') as f:
+        with open(os.path.join(data_dir_cifar10, filename),'rb') as f:
             tmp = pickle.load(f)
             if USE_ALL:
                 print("use all training set (C):")
@@ -53,7 +53,7 @@ def cifar10():
 
     ### test ###
     print("test")
-    with open(os.path.join(data_dir, 'test_batch'), 'rb') as f:
+    with open(os.path.join(data_dir_cifar10, 'test_batch'), 'rb') as f:
         tmp = pickle.load(f)
         imgs = tmp['data']
         labels = tmp['labels']
