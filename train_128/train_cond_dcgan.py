@@ -189,12 +189,12 @@ _gen = theano.function([Z, Y], gX)
 print('%.2f seconds to compile theano functions'%(time()-t))
 
 tr_idxs = np.arange(len(trX))
-trX_vis = np.asarray([[trX[i] for i in py_rng.sample(tr_idxs[trY==y], 20)] for y in range(10)]).reshape(200, -1)
+trX_vis = np.asarray([[trX[i] for i in py_rng.sample(tr_idxs[trY==y], 10)] for y in range(10)]).reshape(100, -1)
 trX_vis = inverse_transform(transform(trX_vis))
-color_grid_vis(trX_vis, (10, 20), 'samples/%s_etl_test.png'%desc)
+color_grid_vis(trX_vis, (10, 10), 'samples/%s_etl_test.png'%desc)
 
-sample_zmb = floatX(np_rng.uniform(-1., 1., size=(200, nz)))
-sample_ymb = floatX(OneHot(np.asarray([[i for _ in range(20)] for i in range(10)]).flatten(), ny))
+sample_zmb = floatX(np_rng.uniform(-1., 1., size=(100, nz)))
+sample_ymb = floatX(OneHot(np.asarray([[i for _ in range(10)] for i in range(10)]).flatten(), ny))
 
 def gen_samples(n, nbatch=128):
     samples = []
@@ -250,7 +250,7 @@ for epoch in range(1, niter+niter_decay+1):
             cost = _train_d(imb, zmb, ymb)
         n_updates += 1
         n_examples += len(imb)
-    if (epoch-1) % 5 == 0:
+    if False: #(epoch-1) % 5 == 0:
         g_cost = float(cost[0])
         d_cost = float(cost[1])
         gX, gY = gen_samples(100000)
@@ -267,7 +267,7 @@ for epoch in range(1, niter+niter_decay+1):
         f_log.flush()
 
     samples = np.asarray(_gen(sample_zmb, sample_ymb))
-    color_grid_vis(inverse_transform(samples), (10, 20), 'samples/%s/%d.png'%(desc, n_epochs))
+    color_grid_vis(inverse_transform(samples), (10, 10), 'samples/%s/%d.png'%(desc, n_epochs))
     n_epochs += 1
     if n_epochs > niter:
         lrt.set_value(floatX(lrt.get_value() - lr/niter_decay))
