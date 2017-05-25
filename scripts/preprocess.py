@@ -18,7 +18,7 @@ else:
     ROOT_DIR = 'D:/v-yusuh/dataset/%s/'%DATASET
 
 def convert_dataset_pickle(root_dir, dataset, classname, img_size):
-    out_dir = os.path.join('..', 'Data', dataset)
+    out_dir = os.path.join('..', 'Data', 'cifar10')
     mkdir_p(out_dir)
     print("save dataset to %s"%out_dir)
 
@@ -34,7 +34,9 @@ def convert_dataset_pickle(root_dir, dataset, classname, img_size):
                 tmp = pickle.load(f)
                 imgs = np.concatenate((imgs, tmp['data']), axis=0)
                 labels = labels + tmp['labels']
-        sel = np.array([i for i,x in enumerate(labels) if x==classname], dtype=np.int32)
+        class_id = CIFAR_CLASSES.index(CLASSNAME)
+        sel = np.array([i for i,x in enumerate(labels) if x==class_id], dtype=np.int32)
+        print(sel.shape)
         imgs = imgs[sel]
         imgs = imgs.reshape(len(sel),3,32,32).transpose((0,2,3,1))
         lr_images = np.array([scipy.misc.imresize(img, [img_size, img_size], 'bicubic') for img in imgs])

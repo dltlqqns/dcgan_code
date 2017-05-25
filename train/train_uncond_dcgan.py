@@ -30,7 +30,7 @@ DATASET = 'cifar10'
 IMG_SIZE = 64
 CLASSNAME = 'horse'
 
-trX, vaX, teX, _, _, _ = load_web_uncond(DATASET, CLASSNAME, IMG_SIZE)
+trX, vaX, teX, _, _, _ = load_uncond(DATASET, CLASSNAME, IMG_SIZE)
 vaX = floatX(vaX)/127.5 - 1.
 
 def transform(X):
