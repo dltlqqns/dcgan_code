@@ -7,20 +7,12 @@ import pickle
 from lib.config import data_dir_cifar10
 import errno
 import scipy.misc
+from utils import mkdir_p
 
 SAVE_IMG_SIZE = 32
 CLASS_NAMES = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 delimeter = '_'
 SAVE_DIR = 'cifar10_one'
-
-def mkdir_p(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc:  # Python >2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
 
 def save_images(imgs, names):
     for idx, img in enumerate(imgs):

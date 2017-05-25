@@ -129,3 +129,7 @@ def load_web(img_size, nsample_per_class):
     trY = trY[:boundary]
 
     return trX, vaX, teX, trY, vaY, teY
+
+def load_web_uncond(img_size, classname, nsample):
+    trX, 
+    return trX, vaX, teX, [], [], []
