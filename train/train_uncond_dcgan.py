@@ -1,13 +1,13 @@
 EXP_NAME = ''
 MODEL_NAME = 'uncond_dcgan'
-DATASET = 'web1000'
+DATASET = 'cifar10'
 IMG_SIZE = 64
-CLASSNAME = 'horse'
-LOAD_MODEL = '64_cifar10_uncond_dcgan_horse_400'
+CLASSNAME = 'ship'
+LOAD_MODEL = '' #'64_cifar10_uncond_dcgan_horse_400'
 BASE_COMPILEDIR = 'tmp/%s_%s_%d'%(DATASET, CLASSNAME, IMG_SIZE)
-GPU_ID = 3
-MODEL_DIR = 'model_tmp'
-SAMPLES_DIR = 'samples_tmp'
+GPU_ID = 0
+MODEL_DIR = 'model'
+SAMPLES_DIR = 'samples'
 
 import sys
 sys.path.append('..')
@@ -62,8 +62,8 @@ nz = 100          # # of dim for Z
 ngf = 128         # # of gen filters in first conv layer
 ndf = 128         # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
-niter = 1000        # # of iter at starting learning rate
-niter_decay = 1000   # # of iter to linearly decay learning rate to zero
+niter = 400        # # of iter at starting learning rate
+niter_decay = 400   # # of iter to linearly decay learning rate to zero
 lr = 0.0002       # initial learning rate for adam
 ntrain, nval, ntest = len(trX), len(vaX), len(teX)
 
@@ -193,9 +193,6 @@ log_fields = [
     'n_updates', 
     'n_examples', 
     'n_seconds',
-    '1k_va_nnd',
-    '10k_va_nnd',
-    '100k_va_nnd',
     'g_cost',
     'd_cost',
 ]
