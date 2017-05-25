@@ -26,10 +26,11 @@ from lib.metrics import nnc_score, nnd_score
 
 from load import *
 
-DATASET = 'web5000'
+DATASET = 'web1000'
 IMG_SIZE = 64
-NSAMPLE = 5000
+NSAMPLE = 1000
 CLASSNAME = 'truck'
+LOAD_MODEL = ''
 
 trX, vaX, teX, _, _, _ = load_web_uncond(DATASET, CLASSNAME, IMG_SIZE)
 vaX = floatX(vaX)/127.5 - 1.
@@ -53,8 +54,8 @@ nz = 100          # # of dim for Z
 ngf = 128         # # of gen filters in first conv layer
 ndf = 128         # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
-niter = 100        # # of iter at starting learning rate
-niter_decay = 100   # # of iter to linearly decay learning rate to zero
+niter = 1000        # # of iter at starting learning rate
+niter_decay = 1000   # # of iter to linearly decay learning rate to zero
 lr = 0.0002       # initial learning rate for adam
 ntrain, nval, ntest = len(trX), len(vaX), len(teX)
 
@@ -158,9 +159,9 @@ _train_d = theano.function([X, Z], cost, updates=d_updates)
 _gen = theano.function([Z], gX)
 print '%.2f seconds to compile theano functions'%(time()-t)
 
-vis_idxs = py_rng.sample(np.arange(len(vaX)), 100)
+vis_idxs = py_rng.sample(np.arange(len(vaX)), 81)
 vaX_vis = inverse_transform(vaX[vis_idxs])
-color_grid_vis(vaX_vis, (10, 10), 'samples/%s_etl_test.png'%desc)
+color_grid_vis(vaX_vis, (9, 9), 'samples/%s_etl_test.png'%desc)
 
 sample_zmb = floatX(np_rng.uniform(-1., 1., size=(100, nz)))
 
@@ -192,6 +193,15 @@ log_fields = [
 ]
 
 vaX = vaX.reshape(len(vaX), -1)
+
+# Load pretrained weight
+if LOAD_MODEL!='':
+    gen_load_path = '../pretrained/%s_gen_params.jl'%LOAD_MODEL
+    disc_load_path = '../pretrained/%s_disc_params.jl'%LOAD_MODEL
+    [p.sef_value(v) for v,p in zip(joblib.load(gen_load_path), gen_params)]
+    [p.sef_value(v) for v,p in zip(joblib.load(disc_load_path), disc_params)]
+    print("Model %s loaded!!"%LOAD_MODEL)
+
 
 print desc.upper()
 n_updates = 0
