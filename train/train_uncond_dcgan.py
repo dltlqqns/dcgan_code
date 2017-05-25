@@ -26,6 +26,14 @@ from lib.metrics import nnc_score, nnd_score
 
 from load import *
 
+DATASET = 'web5000'
+IMG_SIZE = 64
+NSAMPLE = 5000
+CLASSNAME = 'truck'
+
+trX, vaX, teX, _, _, _ = load_web_uncond(DATASET, CLASSNAME, IMG_SIZE)
+vaX = floatX(vaX)/127.5 - 1.
+
 def transform(X):
     #X = [center_crop(x, npx) for x in X]
     #return floatX(X).transpose(0, 3, 1, 2)/127.5 - 1.
@@ -34,11 +42,6 @@ def transform(X):
 def inverse_transform(X):
     X = (X.reshape(-1, nc, npx, npx).transpose(0,2,3,1)+1)*127.5
     return X
-
-DATASET = 'web5000'
-IMG_SIZE = 64
-NSAMPLE = 5000
-CLASSNAME = 'horse'
 
 k = 1             # # of discrim updates for each gen update
 l2 = 1e-5         # l2 weight decay
@@ -50,12 +53,11 @@ nz = 100          # # of dim for Z
 ngf = 128         # # of gen filters in first conv layer
 ndf = 128         # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
-niter = 25        # # of iter at starting learning rate
-niter_decay = 0   # # of iter to linearly decay learning rate to zero
+niter = 100        # # of iter at starting learning rate
+niter_decay = 100   # # of iter to linearly decay learning rate to zero
 lr = 0.0002       # initial learning rate for adam
-ntrain = 350000   # # of examples to train on
+ntrain, nval, ntest = len(trX), len(vaX), len(teX)
 
-trX, vaX, teX, _, _, _ = load_web_uncond(DATASET, CLASSNAME, IMG_SIZE)
 
 desc = '%s_uncond_dcgan_%s'%(DATASET, CLASSNAME)
 model_dir = 'models/%s'%desc
@@ -200,7 +202,7 @@ n_examples = 0
 t = time()
 for epoch in range(niter+niter_decay+1):
     trX = shuffle(trX)
-    for imb, in tqdm(tr_stream.get_epoch_iterator(), total=ntrain/nbatch):
+    for imb in tqdm(iter_data(trX, size=nbatch), total=ntrain/nbatch):
         imb = transform(imb)
         zmb = floatX(np_rng.uniform(-1., 1., size=(len(imb), nz)))
         if n_updates % (k+1) == 0:
