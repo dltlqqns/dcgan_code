@@ -37,7 +37,7 @@ for i in range(1,6):
     with open(os.path.join(data_dir_cifar10, filename), 'rb') as f:
         tmp = pickle.load(f)
         imgs = tmp['data'].reshape(-1,3,32,32).transpose((0,2,3,1))
-        names = [CLASS_NAMES[u] + delimeter + v for u,v in zip(tmp['labels'], tmp['filenames'])]
+        names = [CLASS_NAMES[u] + delimeter + os.path.splitext(v)[0] for u,v in zip(tmp['labels'], tmp['filenames'])]
         print(imgs.shape)
         save_images(imgs, names)
 
