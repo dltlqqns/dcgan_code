@@ -1,8 +1,11 @@
-DATASET = 'cifar10'
+EXP_NAME = ''
+MODEL_NAME = 'uncond_dcgan'
+DATASET = 'web1000'
 IMG_SIZE = 64
 CLASSNAME = 'horse'
-LOAD_MODEL = '200'
+LOAD_MODEL = '64_cifar10_uncond_dcgan_horse_400'
 BASE_COMPILEDIR = 'tmp/%s_%s_%d'%(DATASET, CLASSNAME, IMG_SIZE)
+GPU_ID = 3
 MODEL_DIR = 'model_tmp'
 SAMPLES_DIR = 'samples_tmp'
 
@@ -18,7 +21,7 @@ from tqdm import tqdm
 from matplotlib import pyplot as plt
 from sklearn.externals import joblib
 
-os.environ['THEANO_FLAGS'] = 'base_compiledir=%s'%BASE_COMPILEDIR
+os.environ['THEANO_FLAGS'] = 'base_compiledir=%s, device=gpu%d'%(BASE_COMPILEDIR, GPU_ID)
 import theano
 import theano.tensor as T
 from theano.sandbox.cuda.dnn import dnn_conv
@@ -65,7 +68,7 @@ lr = 0.0002       # initial learning rate for adam
 ntrain, nval, ntest = len(trX), len(vaX), len(teX)
 
 
-desc = '%s_uncond_dcgan_%s'%(DATASET, CLASSNAME)
+desc = '%s_%s_%s_%s'%(EXP_NAME, DATASET, MODEL_NAME, CLASSNAME)
 model_dir = '%s/%s'%(MODEL_DIR, desc)
 samples_dir = '%s/%s'%(SAMPLES_DIR, desc)
 if not os.path.exists('logs/'):
@@ -226,16 +229,11 @@ for epoch in range(niter+niter_decay+1):
             cost = _train_d(imb, zmb)
         n_updates += 1
         n_examples += len(imb)
-    if False:
+    if epoch%5 == 0:
         g_cost = float(cost[0])
         d_cost = float(cost[1])
-        gX = gen_samples(100000)
-        gX = gX.reshape(len(gX), -1)
-        va_nnd_1k = nnd_score(gX[:1000], vaX, metric='euclidean')
-        va_nnd_10k = nnd_score(gX[:10000], vaX, metric='euclidean')
-        va_nnd_100k = nnd_score(gX[:100000], vaX, metric='euclidean')
-        log = [n_epochs, n_updates, n_examples, time()-t, va_nnd_1k, va_nnd_10k, va_nnd_100k, g_cost, d_cost]
-        print '%.0f %.2f %.2f %.2f %.4f %.4f'%(epoch, va_nnd_1k, va_nnd_10k, va_nnd_100k, g_cost, d_cost)
+        log = [n_epochs, n_updates, n_examples, time()-t, g_cost, d_cost]
+        print '%.0f %.4f %.4f'%(epoch, g_cost, d_cost)
         f_log.write(json.dumps(dict(zip(log_fields, log)))+'\n')
         f_log.flush()
 
