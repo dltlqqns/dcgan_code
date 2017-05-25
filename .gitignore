@@ -3,7 +3,11 @@
 logs/
 models/
 samples/
+*/samples*/
+*/models*/
 nohup*
 *jpg
 Data/
 *ipynb_checkpoints*
+tmp*
+pretrained/

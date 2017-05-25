@@ -1,3 +1,11 @@
+DATASET = 'cifar10'
+IMG_SIZE = 64
+CLASSNAME = 'horse'
+LOAD_MODEL = '200'
+BASE_COMPILEDIR = 'tmp/%s_%s_%d'%(DATASET, CLASSNAME, IMG_SIZE)
+MODEL_DIR = 'model_tmp'
+SAMPLES_DIR = 'samples_tmp'
+
 import sys
 sys.path.append('..')
 #sys.path.append('/home/yumin/codes/dcgan_code')
@@ -10,9 +18,11 @@ from tqdm import tqdm
 from matplotlib import pyplot as plt
 from sklearn.externals import joblib
 
+os.environ['THEANO_FLAGS'] = 'base_compiledir=%s'%BASE_COMPILEDIR
 import theano
 import theano.tensor as T
 from theano.sandbox.cuda.dnn import dnn_conv
+print("Base compile directory: %s"%theano.config.base_compiledir)
 
 from lib import activations
 from lib import updates
@@ -26,12 +36,8 @@ from lib.metrics import nnc_score, nnd_score
 
 from load import *
 
-DATASET = 'web5000'
-IMG_SIZE = 64
-NSAMPLE = 5000
-CLASSNAME = 'truck'
+trX, vaX, teX, _, _, _ = load_uncond(DATASET, CLASSNAME, IMG_SIZE)
 
-trX, vaX, teX, _, _, _ = load_web_uncond(DATASET, CLASSNAME, IMG_SIZE)
 vaX = floatX(vaX)/127.5 - 1.
 
 def transform(X):
@@ -53,15 +59,15 @@ nz = 100          # # of dim for Z
 ngf = 128         # # of gen filters in first conv layer
 ndf = 128         # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
-niter = 100        # # of iter at starting learning rate
-niter_decay = 100   # # of iter to linearly decay learning rate to zero
+niter = 1000        # # of iter at starting learning rate
+niter_decay = 1000   # # of iter to linearly decay learning rate to zero
 lr = 0.0002       # initial learning rate for adam
 ntrain, nval, ntest = len(trX), len(vaX), len(teX)
 
 
 desc = '%s_uncond_dcgan_%s'%(DATASET, CLASSNAME)
-model_dir = 'models/%s'%desc
-samples_dir = 'samples/%s'%desc
+model_dir = '%s/%s'%(MODEL_DIR, desc)
+samples_dir = '%s/%s'%(SAMPLES_DIR, desc)
 if not os.path.exists('logs/'):
     os.makedirs('logs/')
 if not os.path.exists(model_dir):
@@ -158,9 +164,9 @@ _train_d = theano.function([X, Z], cost, updates=d_updates)
 _gen = theano.function([Z], gX)
 print '%.2f seconds to compile theano functions'%(time()-t)
 
-vis_idxs = py_rng.sample(np.arange(len(vaX)), 100)
+vis_idxs = py_rng.sample(np.arange(len(vaX)), 81)
 vaX_vis = inverse_transform(vaX[vis_idxs])
-color_grid_vis(vaX_vis, (10, 10), 'samples/%s_etl_test.png'%desc)
+color_grid_vis(vaX_vis, (9, 9), os.path.join(samples_dir, '%s_etl_test.png'%desc))
 
 sample_zmb = floatX(np_rng.uniform(-1., 1., size=(100, nz)))
 
@@ -192,6 +198,15 @@ log_fields = [
 ]
 
 vaX = vaX.reshape(len(vaX), -1)
+
+# Load pretrained weight
+if LOAD_MODEL!='':
+    gen_load_path = '../pretrained/%s_gen_params.jl'%LOAD_MODEL
+    discrim_load_path = '../pretrained/%s_discrim_params.jl'%LOAD_MODEL
+    [p.set_value(v) for v,p in zip(joblib.load(gen_load_path), gen_params)]
+    [p.set_value(v) for v,p in zip(joblib.load(discrim_load_path), discrim_params)]
+    print("Model %s loaded!!"%LOAD_MODEL)
+
 
 print desc.upper()
 n_updates = 0
@@ -225,10 +240,14 @@ for epoch in range(niter+niter_decay+1):
         f_log.flush()
 
     samples = np.asarray(_gen(sample_zmb))
-    color_grid_vis(inverse_transform(samples), (10, 10), 'samples/%s/%d.png'%(desc, n_epochs))
+    color_grid_vis(inverse_transform(samples), (10, 10), os.path.join(samples_dir, '%d.png'%(n_epochs)))
     n_epochs += 1
     if n_epochs > niter:
         lrt.set_value(floatX(lrt.get_value() - lr/niter_decay))
-    if n_epochs in [1, 2, 3, 4, 5, 10, 15, 20, 25]:
-        joblib.dump([p.get_value() for p in gen_params], 'models/%s/%d_gen_params.jl'%(desc, n_epochs))
-        joblib.dump([p.get_value() for p in discrim_params], 'models/%s/%d_discrim_params.jl'%(desc, n_epochs))
+    if n_epochs in [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]:
+        joblib.dump([p.get_value() for p in gen_params], os.path.join(model_dir, '%d_gen_params.jl'%n_epochs))
+        joblib.dump([p.get_value() for p in discrim_params], os.path.join(model_dir, '%d_discrim_params.jl'%n_epochs))
+
+# Save last model
+joblib.dump([p.get_value() for p in discrim_params], os.path.join(model_dir, '%d_discrim_params.jl'%epoch))
+joblib.dump([p.get_value() for p in gen_params], os.path.join(model_dir, '%d_gen_params.jl'%epoch))
