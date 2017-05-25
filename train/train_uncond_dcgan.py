@@ -1,3 +1,9 @@
+DATASET = 'cifar10'
+IMG_SIZE = 64
+CLASSNAME = 'horse'
+BASE_COMPILEDIR = 'tmp/%s_%s_%d'%(DATASET, CLASSNAME, IMG_SIZE)
+print("Base compile directory: %s"%BASE_COMPILEDIR)
+
 import sys
 sys.path.append('..')
 #sys.path.append('/home/yumin/codes/dcgan_code')
@@ -10,6 +16,7 @@ from tqdm import tqdm
 from matplotlib import pyplot as plt
 from sklearn.externals import joblib
 
+os.envirion['THEANO_FLAGS'] = 'base_compiledir=%s'%BASE_COMPILEDIR
 import theano
 import theano.tensor as T
 from theano.sandbox.cuda.dnn import dnn_conv
@@ -25,10 +32,6 @@ from lib.data_utils import OneHot, shuffle, iter_data, center_crop, patch
 from lib.metrics import nnc_score, nnd_score
 
 from load import *
-
-DATASET = 'cifar10'
-IMG_SIZE = 64
-CLASSNAME = 'horse'
 
 trX, vaX, teX, _, _, _ = load_uncond(DATASET, CLASSNAME, IMG_SIZE)
 vaX = floatX(vaX)/127.5 - 1.
