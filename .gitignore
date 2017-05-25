@@ -3,6 +3,10 @@
 logs/
 models/
 samples/
+*/samples*/
+*/models*/
 nohup*
 *jpg
 Data/
+tmp*
+pretrained/
