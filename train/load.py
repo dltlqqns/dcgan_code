@@ -130,7 +130,8 @@ def load_web(img_size, nsample_per_class):
 
     return trX, vaX, teX, trY, vaY, teY
 
-def load_web_uncond(dataset, classname, img_size):
+# dirty addition: one class loaders
+def load_uncond(dataset, classname, img_size):
     filepath = os.path.join('..','Data', dataset, '%dimages_%s.pickle'%(img_size, classname))
     with open(filepath,'rb') as f:
         trX = pickle.load(f)
