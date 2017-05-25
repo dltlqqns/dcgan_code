@@ -26,10 +26,9 @@ from lib.metrics import nnc_score, nnd_score
 
 from load import *
 
-DATASET = 'web5000'
+DATASET = 'cifar10'
 IMG_SIZE = 64
-NSAMPLE = 5000
-CLASSNAME = 'truck'
+CLASSNAME = 'horse'
 
 trX, vaX, teX, _, _, _ = load_web_uncond(DATASET, CLASSNAME, IMG_SIZE)
 vaX = floatX(vaX)/127.5 - 1.
@@ -53,8 +52,8 @@ nz = 100          # # of dim for Z
 ngf = 128         # # of gen filters in first conv layer
 ndf = 128         # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
-niter = 100        # # of iter at starting learning rate
-niter_decay = 100   # # of iter to linearly decay learning rate to zero
+niter = 1000        # # of iter at starting learning rate
+niter_decay = 1000   # # of iter to linearly decay learning rate to zero
 lr = 0.0002       # initial learning rate for adam
 ntrain, nval, ntest = len(trX), len(vaX), len(teX)
 
@@ -229,6 +228,10 @@ for epoch in range(niter+niter_decay+1):
     n_epochs += 1
     if n_epochs > niter:
         lrt.set_value(floatX(lrt.get_value() - lr/niter_decay))
-    if n_epochs in [1, 2, 3, 4, 5, 10, 15, 20, 25]:
+    if n_epochs in [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]:
         joblib.dump([p.get_value() for p in gen_params], 'models/%s/%d_gen_params.jl'%(desc, n_epochs))
         joblib.dump([p.get_value() for p in discrim_params], 'models/%s/%d_discrim_params.jl'%(desc, n_epochs))
+
+# Save last model
+joblib.dump([p.get_value() for p in discrim_params], 'models/%s/%d_discrim_params.jl'%(desc, epoch))
+joblib.dump([p.get_value() for p in gen_params], 'models/%s/%d_gen_params.jl'%(desc, epoch))

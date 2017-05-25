@@ -9,7 +9,7 @@ import numpy as np
 import platform
 
 DATASET = 'cifar-10-batches-py' #'web5000'
-CLASSNAME = 'truck'
+CLASSNAME = 'horse'
 IMG_SIZE = 64
 CIFAR_CLASSES = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 if platform.system()=='Linux':
@@ -24,6 +24,7 @@ def convert_dataset_pickle(root_dir, dataset, classname, img_size):
 
     if 'cifar' in dataset.lower():
         print("CIFAR-10!!")
+        print(classname)
         imgs = np.empty(shape=[0,3072])
         labels = []
         for i in range(1,6):
