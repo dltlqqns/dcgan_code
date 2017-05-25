@@ -6,3 +6,4 @@ samples/
 nohup*
 *jpg
 Data/
+*ipynb_checkpoints*
