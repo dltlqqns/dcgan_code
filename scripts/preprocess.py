@@ -7,7 +7,8 @@ import pickle
 from utils import mkdir_p
 
 DATASET = 'web5000'
-ROOT_DIR = '/home/yumin/dataset/%s/'%DATASET
+# ROOT_DIR = '/home/yumin/dataset/%s/'%DATASET
+ROOT_DIR = 'D:/v-yusuh/dataset/%s/'%DATASET
 CLASSNAME = 'horse'
 IMG_SIZE = 64
 
@@ -20,7 +21,7 @@ def convert_dataset_pickle(root_dir, dataset, classname, img_size):
 
     imgs = []
     for filename in filenames:
-        img = scipy.misc.imread()
+        img = scipy.misc.imread(filename)
         img = img.astype('uint8')
         img = scipy.misc.imresize(img, [img_size, img_size], 'bicubic')
         imgs.append(img)
