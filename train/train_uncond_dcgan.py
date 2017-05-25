@@ -1,6 +1,6 @@
 import sys
-#sys.path.append('..')
-sys.path.append('/home/yumin/codes/dcgan_code')
+sys.path.append('..')
+#sys.path.append('/home/yumin/codes/dcgan_code')
 
 import os
 import json
@@ -35,9 +35,9 @@ def inverse_transform(X):
     X = (X.reshape(-1, nc, npx, npx).transpose(0,2,3,1)+1)*127.5
     return X
 
-DATASET = 'web'
-IMG_SIZE = 128
-NSAMPLE = 1000
+DATASET = 'web5000'
+IMG_SIZE = 64
+NSAMPLE = 5000
 CLASSNAME = 'horse'
 
 k = 1             # # of discrim updates for each gen update
@@ -55,15 +55,9 @@ niter_decay = 0   # # of iter to linearly decay learning rate to zero
 lr = 0.0002       # initial learning rate for adam
 ntrain = 350000   # # of examples to train on
 
-if DATASET=='cifar10':
-    load_dataset = load_cifar10
-elif DATASET=='web':
-    load_dataset = load_web
-else:
-    error('unsupported dataset!')
-trX, vaX, teX, _, _, _ = load_dataset(IMG_SIZE, CLASSNAME, NSAMPLE)
+trX, vaX, teX, _, _, _ = load_web_uncond(DATASET, CLASSNAME, IMG_SIZE)
 
-desc = '%s_uncond_dcgan_%d'%(DATASET, NSAMPLE)
+desc = '%s_uncond_dcgan_%s'%(DATASET, CLASSNAME)
 model_dir = 'models/%s'%desc
 samples_dir = 'samples/%s'%desc
 if not os.path.exists('logs/'):

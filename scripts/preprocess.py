@@ -9,7 +9,7 @@ from utils import mkdir_p
 DATASET = 'web5000'
 # ROOT_DIR = '/home/yumin/dataset/%s/'%DATASET
 ROOT_DIR = 'D:/v-yusuh/dataset/%s/'%DATASET
-CLASSNAME = 'horse'
+CLASSNAME = 'truck'
 IMG_SIZE = 64
 
 def convert_dataset_pickle(root_dir, dataset, classname, img_size):

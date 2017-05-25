@@ -130,6 +130,18 @@ def load_web(img_size, nsample_per_class):
 
     return trX, vaX, teX, trY, vaY, teY
 
-def load_web_uncond(img_size, classname, nsample):
-    trX, 
+def load_web_uncond(dataset, classname, img_size):
+    filepath = os.path.join('..','Data', dataset, '%dimages_%s.pickle'%(img_size, classname))
+    with open(filepath,'rb') as f:
+        trX = pickle.load(f)
+    if trX[0].shape[0]!=img_size and trX[0].shape[1]!=img_size:
+        trX_re = [scipy.misc.imresize(img, [img_size, img_size]) for img in trX]
+    else:
+        trX_re = trX
+    trX = np.array(trX_re).transpose((0,3,1,2)).reshape(-1, img_size*img_size*NUM_CHANNEL)
+
+    boundary = int(np.floor(trX.shape[0]*0.9))
+    vaX = trX[boundary:]
+    trX = trX[:boundary]
+    teX = []
     return trX, vaX, teX, [], [], []
