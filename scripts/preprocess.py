@@ -8,8 +8,8 @@ from utils import mkdir_p
 import numpy as np
 import platform
 
-DATASET = 'cifar-10-batches-py' #'web5000'
-CLASSNAME = 'ship'
+DATASET = 'CUB_200_2011' #'cifar-10-batches-py' #'web5000'
+CLASSNAME = '' #'ship'
 IMG_SIZE = 64
 CIFAR_CLASSES = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 if platform.system()=='Linux':
@@ -18,7 +18,7 @@ else:
     ROOT_DIR = 'D:/v-yusuh/dataset/%s/'%DATASET
 
 def convert_dataset_pickle(root_dir, dataset, classname, img_size):
-    out_dir = os.path.join('..', 'Data', 'cifar10')
+    out_dir = os.path.join('..', 'Data', dataset) 
     mkdir_p(out_dir)
     print("save dataset to %s"%out_dir)
 
@@ -42,13 +42,17 @@ def convert_dataset_pickle(root_dir, dataset, classname, img_size):
         lr_images = np.array([scipy.misc.imresize(img, [img_size, img_size], 'bicubic') for img in imgs])
 
     else:
-        print("Web!!")
-        filenames = glob.glob(os.path.join(root_dir, classname, '*.jpg'))
+        print("Generate pickle file from image folder!!")
+        #filenames = glob.glob(os.path.join(root_dir, classname, '*.jpg'))
+        filenames = glob.glob(os.path.join(root_dir, 'images', '*/*.jpg')) #cub200
         print("#img: " + str(len(filenames)))
 
         imgs = []
         for filename in filenames:
             img = scipy.misc.imread(filename)
+            if len(img.shape)==2 or img.shape[2]==1:
+                img = np.expand_dims(img, 2)
+                img = np.tile(img, [1,1,3])
             img = img.astype('uint8')
             img = scipy.misc.imresize(img, [img_size, img_size], 'bicubic')
             imgs.append(img)
