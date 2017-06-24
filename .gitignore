@@ -11,3 +11,4 @@ Data/
 *ipynb_checkpoints*
 tmp*
 pretrained/
+*tmp/

@@ -1,10 +1,11 @@
 DATASET = 'cifar10'
 IMG_SIZE = 64
 CLASSNAME = 'horse'
-LOAD_MODEL = '200'
+LOAD_MODEL = 350 #'200'
 BASE_COMPILEDIR = 'tmp/%s_%s_%d'%(DATASET, CLASSNAME, IMG_SIZE)
 MODEL_DIR = 'model_tmp'
 SAMPLES_DIR = 'samples_tmp'
+#NUM_TRAINING_SAMPLE = 1000 # adhoc for test
 
 import sys
 sys.path.append('..')
@@ -37,6 +38,12 @@ from lib.metrics import nnc_score, nnd_score
 from load import *
 
 trX, vaX, teX, _, _, _ = load_uncond(DATASET, CLASSNAME, IMG_SIZE)
+# adhoc for test
+#sel = np.random.permutation(len(trX))[:NUM_TRAINING_SAMPLE]
+#trX = trX[sel]
+#sel = np.random.permutation(len(vaX))[:int(NUM_TRAINING_SAMPLE*0.1)]
+#vaX = vaX[sel]
+# adhor for test -end
 
 vaX = floatX(vaX)/127.5 - 1.
 
@@ -59,8 +66,8 @@ nz = 100          # # of dim for Z
 ngf = 128         # # of gen filters in first conv layer
 ndf = 128         # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
-niter = 1000        # # of iter at starting learning rate
-niter_decay = 1000   # # of iter to linearly decay learning rate to zero
+niter = 400        # # of iter at starting learning rate
+niter_decay = 400   # # of iter to linearly decay learning rate to zero
 lr = 0.0002       # initial learning rate for adam
 ntrain, nval, ntest = len(trX), len(vaX), len(teX)
 
@@ -200,9 +207,11 @@ log_fields = [
 vaX = vaX.reshape(len(vaX), -1)
 
 # Load pretrained weight
-if LOAD_MODEL!='':
-    gen_load_path = '../pretrained/%s_gen_params.jl'%LOAD_MODEL
-    discrim_load_path = '../pretrained/%s_discrim_params.jl'%LOAD_MODEL
+if LOAD_MODEL!=0:
+    #gen_load_path = '../pretrained/%s_gen_params.jl'%LOAD_MODEL
+    #discrim_load_path = '../pretrained/%s_discrim_params.jl'%LOAD_MODEL
+    gen_load_path = '%s/%d_gen_params.jl'%(model_dir, LOAD_MODEL)
+    discrim_load_path = '%s/%d_discrim_params.jl'%(model_dir, LOAD_MODEL)
     [p.set_value(v) for v,p in zip(joblib.load(gen_load_path), gen_params)]
     [p.set_value(v) for v,p in zip(joblib.load(discrim_load_path), discrim_params)]
     print("Model %s loaded!!"%LOAD_MODEL)
@@ -211,11 +220,12 @@ if LOAD_MODEL!='':
 print desc.upper()
 n_updates = 0
 n_check = 0
-n_epochs = 0
+#n_epochs = 0
 n_updates = 0
 n_examples = 0
 t = time()
-for epoch in range(niter+niter_decay+1):
+for epoch in range(LOAD_MODEL, niter+niter_decay+1):
+    print("epoch %d--------------"%epoch)
     trX = shuffle(trX)
     for imb in tqdm(iter_data(trX, size=nbatch), total=ntrain/nbatch):
         imb = transform(imb)
@@ -234,19 +244,19 @@ for epoch in range(niter+niter_decay+1):
         va_nnd_1k = nnd_score(gX[:1000], vaX, metric='euclidean')
         va_nnd_10k = nnd_score(gX[:10000], vaX, metric='euclidean')
         va_nnd_100k = nnd_score(gX[:100000], vaX, metric='euclidean')
-        log = [n_epochs, n_updates, n_examples, time()-t, va_nnd_1k, va_nnd_10k, va_nnd_100k, g_cost, d_cost]
+        log = [epochs, n_updates, n_examples, time()-t, va_nnd_1k, va_nnd_10k, va_nnd_100k, g_cost, d_cost]
         print '%.0f %.2f %.2f %.2f %.4f %.4f'%(epoch, va_nnd_1k, va_nnd_10k, va_nnd_100k, g_cost, d_cost)
         f_log.write(json.dumps(dict(zip(log_fields, log)))+'\n')
         f_log.flush()
 
     samples = np.asarray(_gen(sample_zmb))
-    color_grid_vis(inverse_transform(samples), (10, 10), os.path.join(samples_dir, '%d.png'%(n_epochs)))
-    n_epochs += 1
-    if n_epochs > niter:
+    color_grid_vis(inverse_transform(samples), (10, 10), os.path.join(samples_dir, '%d.png'%(epoch)))
+    #n_epochs += 1
+    if epoch > niter:
         lrt.set_value(floatX(lrt.get_value() - lr/niter_decay))
-    if n_epochs in [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]:
-        joblib.dump([p.get_value() for p in gen_params], os.path.join(model_dir, '%d_gen_params.jl'%n_epochs))
-        joblib.dump([p.get_value() for p in discrim_params], os.path.join(model_dir, '%d_discrim_params.jl'%n_epochs))
+    if epoch in range(0,400,50):
+        joblib.dump([p.get_value() for p in gen_params], os.path.join(model_dir, '%d_gen_params.jl'%epoch))
+        joblib.dump([p.get_value() for p in discrim_params], os.path.join(model_dir, '%d_discrim_params.jl'%epoch))
 
 # Save last model
 joblib.dump([p.get_value() for p in discrim_params], os.path.join(model_dir, '%d_discrim_params.jl'%epoch))
