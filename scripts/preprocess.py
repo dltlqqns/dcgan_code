@@ -9,7 +9,7 @@ import numpy as np
 import platform
 
 DATASET = 'cifar-10-batches-py' #'web5000'
-CLASSNAME = 'horse'
+CLASSNAME = 'ship'
 IMG_SIZE = 64
 CIFAR_CLASSES = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 if platform.system()=='Linux':
