@@ -6,8 +6,24 @@ CLASSNAME = 'ship'
 LOAD_MODEL = '' #'64_cifar10_uncond_dcgan_horse_400'
 BASE_COMPILEDIR = 'tmp/%s_%s_%d'%(DATASET, CLASSNAME, IMG_SIZE)
 GPU_ID = 0
-MODEL_DIR = 'model'
+MODEL_DIR = 'models'
 SAMPLES_DIR = 'samples'
+LOSS_TYPE = 'WGAN' #'GAN'
+
+k_discrim = 100             # # of discrim updates for each gen update
+l2 = 1e-5         # l2 weight decay
+b1 = 0.5          # momentum term of adam
+nc = 3            # # of channels in image
+nbatch = 128      # # of examples in batch
+npx = 64          # # of pixels width/height of images
+nz = 100          # # of dim for Z
+ngf = 128         # # of gen filters in first conv layer
+ndf = 128         # # of discrim filters in first conv layer
+nx = npx*npx*nc   # # of dimensions in X
+niter = 400*k_discrim        # # of iter at starting learning rate
+niter_decay = 400*k_discrim   # # of iter to linearly decay learning rate to zero
+lr = 0.0002       # initial learning rate for adam
+clip = 0.01
 
 import sys
 sys.path.append('..')
@@ -40,6 +56,7 @@ from lib.metrics import nnc_score, nnd_score
 from load import *
 
 trX, vaX, teX, _, _, _ = load_uncond(DATASET, CLASSNAME, IMG_SIZE)
+ntrain, nval, ntest = len(trX), len(vaX), len(teX)
 
 vaX = floatX(vaX)/127.5 - 1.
 
@@ -51,21 +68,6 @@ def transform(X):
 def inverse_transform(X):
     X = (X.reshape(-1, nc, npx, npx).transpose(0,2,3,1)+1)*127.5
     return X
-
-k = 1             # # of discrim updates for each gen update
-l2 = 1e-5         # l2 weight decay
-b1 = 0.5          # momentum term of adam
-nc = 3            # # of channels in image
-nbatch = 128      # # of examples in batch
-npx = 64          # # of pixels width/height of images
-nz = 100          # # of dim for Z
-ngf = 128         # # of gen filters in first conv layer
-ndf = 128         # # of discrim filters in first conv layer
-nx = npx*npx*nc   # # of dimensions in X
-niter = 400        # # of iter at starting learning rate
-niter_decay = 400   # # of iter to linearly decay learning rate to zero
-lr = 0.0002       # initial learning rate for adam
-ntrain, nval, ntest = len(trX), len(vaX), len(teX)
 
 
 desc = '%s_%s_%s_%s'%(EXP_NAME, DATASET, MODEL_NAME, CLASSNAME)
@@ -133,7 +135,10 @@ def discrim(X, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, wy):
     h3 = lrelu(batchnorm(dnn_conv(h2, w3, subsample=(2, 2), border_mode=(2, 2)), g=g3, b=b3))
     h4 = lrelu(batchnorm(dnn_conv(h3, w4, subsample=(2, 2), border_mode=(2, 2)), g=g4, b=b4))
     h4 = T.flatten(h4, 2)
-    y = sigmoid(T.dot(h4, wy))
+    if LOSS_TYPE=='WGAN':
+        y = T.dot(h4, wy)
+    elif LOSS_TYPE=='GAN':
+        y = sigmoid(T.dot(h4, wy))
     return y
 
 X = T.tensor4()
@@ -144,9 +149,14 @@ gX = gen(Z, *gen_params)
 p_real = discrim(X, *discrim_params)
 p_gen = discrim(gX, *discrim_params)
 
-d_cost_real = bce(p_real, T.ones(p_real.shape)).mean()
-d_cost_gen = bce(p_gen, T.zeros(p_gen.shape)).mean()
-g_cost_d = bce(p_gen, T.ones(p_gen.shape)).mean()
+if LOSS_TYPE=='WGAN':
+    d_cost_real = p_real.mean()
+    d_cost_gen = -p_gen.mean()
+    g_cost_d = p_gen.mean()
+elif LOSS_TYPE=='GAN':
+    d_cost_real = bce(p_real, T.ones(p_real.shape)).mean()
+    d_cost_gen = bce(p_gen, T.zeros(p_gen.shape)).mean()
+    g_cost_d = bce(p_gen, T.ones(p_gen.shape)).mean()
 
 d_cost = d_cost_real + d_cost_gen
 g_cost = g_cost_d
@@ -154,8 +164,14 @@ g_cost = g_cost_d
 cost = [g_cost, d_cost, g_cost_d, d_cost_real, d_cost_gen]
 
 lrt = sharedX(lr)
-d_updater = updates.Adam(lr=lrt, b1=b1, regularizer=updates.Regularizer(l2=l2))
-g_updater = updates.Adam(lr=lrt, b1=b1, regularizer=updates.Regularizer(l2=l2))
+if LOSS_TYPE=='WGAN':
+    clip_updates = 
+    d_updater = updates.RMSprop(lr=lrt, b1=b1, regularizer=updates.Regularizer(l2=l2))
+    g_updater = updates.RMSprop(lr=lrt, b1=b1, regularizer=updates.Regularizer(l2=l2))
+    #updates = d_updates + g_updates + clip_updates
+elif LOSS_TYPE=='GAN':
+    d_updater = updates.Adam(lr=lrt, b1=b1, regularizer=updates.Regularizer(l2=l2))
+    g_updater = updates.Adam(lr=lrt, b1=b1, regularizer=updates.Regularizer(l2=l2))
 d_updates = d_updater(discrim_params, d_cost)
 g_updates = g_updater(gen_params, g_cost)
 updates = d_updates + g_updates
@@ -165,6 +181,8 @@ t = time()
 _train_g = theano.function([X, Z], cost, updates=g_updates)
 _train_d = theano.function([X, Z], cost, updates=d_updates)
 _gen = theano.function([Z], gX)
+if LOSS_TYPE=='WGAN':
+    _clip_d = theano.function([], updates=clip_updates)
 print '%.2f seconds to compile theano functions'%(time()-t)
 
 vis_idxs = py_rng.sample(np.arange(len(vaX)), 81)
@@ -220,10 +238,12 @@ for epoch in range(niter+niter_decay+1):
     for imb in tqdm(iter_data(trX, size=nbatch), total=ntrain/nbatch):
         imb = transform(imb)
         zmb = floatX(np_rng.uniform(-1., 1., size=(len(imb), nz)))
-        if n_updates % (k+1) == 0:
+        if n_updates % (k_discrim+1) == 0:
             cost = _train_g(imb, zmb)
         else:
             cost = _train_d(imb, zmb)
+            if LOSS_TYPE=='WGAN':
+                .
         n_updates += 1
         n_examples += len(imb)
     if epoch%5 == 0:
