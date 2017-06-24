@@ -1,16 +1,16 @@
 EXP_NAME = ''
 MODEL_NAME = 'uncond_dcgan'
-DATASET = 'cifar10'
+DATASET = 'CUB_200_2011'  #'cifar10'
 IMG_SIZE = 64
-CLASSNAME = 'ship'
+CLASSNAME = '' #'ship'
 LOAD_MODEL = '' #'64_cifar10_uncond_dcgan_horse_400'
 BASE_COMPILEDIR = 'tmp/%s_%s_%d'%(DATASET, CLASSNAME, IMG_SIZE)
 GPU_ID = 0
 MODEL_DIR = 'models'
 SAMPLES_DIR = 'samples'
-LOSS_TYPE = 'WGAN' #'GAN'
+LOSS_TYPE = 'GAN' #'GAN'
 
-k_discrim = 100             # # of discrim updates for each gen update
+k_discrim = 1     # # of discrim updates for each gen update
 l2 = 1e-5         # l2 weight decay
 b1 = 0.5          # momentum term of adam
 nc = 3            # # of channels in image
@@ -165,9 +165,10 @@ cost = [g_cost, d_cost, g_cost_d, d_cost_real, d_cost_gen]
 
 lrt = sharedX(lr)
 if LOSS_TYPE=='WGAN':
-    clip_updates = 
-    d_updater = updates.RMSprop(lr=lrt, b1=b1, regularizer=updates.Regularizer(l2=l2))
-    g_updater = updates.RMSprop(lr=lrt, b1=b1, regularizer=updates.Regularizer(l2=l2))
+    pass
+    #clip_updates = 
+    #d_updater = updates.RMSprop(lr=lrt, b1=b1, regularizer=updates.Regularizer(l2=l2))
+    #g_updater = updates.RMSprop(lr=lrt, b1=b1, regularizer=updates.Regularizer(l2=l2))
     #updates = d_updates + g_updates + clip_updates
 elif LOSS_TYPE=='GAN':
     d_updater = updates.Adam(lr=lrt, b1=b1, regularizer=updates.Regularizer(l2=l2))
@@ -182,7 +183,8 @@ _train_g = theano.function([X, Z], cost, updates=g_updates)
 _train_d = theano.function([X, Z], cost, updates=d_updates)
 _gen = theano.function([Z], gX)
 if LOSS_TYPE=='WGAN':
-    _clip_d = theano.function([], updates=clip_updates)
+    pass
+    #_clip_d = theano.function([], updates=clip_updates)
 print '%.2f seconds to compile theano functions'%(time()-t)
 
 vis_idxs = py_rng.sample(np.arange(len(vaX)), 81)
@@ -243,7 +245,8 @@ for epoch in range(niter+niter_decay+1):
         else:
             cost = _train_d(imb, zmb)
             if LOSS_TYPE=='WGAN':
-                .
+                pass
+                #TODO: implement
         n_updates += 1
         n_examples += len(imb)
     if epoch%5 == 0:

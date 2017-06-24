@@ -136,9 +136,12 @@ def load_uncond(dataset, classname, img_size):
     with open(filepath,'rb') as f:
         trX = pickle.load(f)
     if trX[0].shape[0]!=img_size and trX[0].shape[1]!=img_size:
+        print('resizin image')
         trX_re = [scipy.misc.imresize(img, [img_size, img_size]) for img in trX]
     else:
         trX_re = trX
+    print('--')
+    print(np.array(trX_re).shape)
     trX = np.array(trX_re).transpose((0,3,1,2)).reshape(-1, img_size*img_size*NUM_CHANNEL)
 
     boundary = int(np.floor(trX.shape[0]*0.9))
