@@ -2,9 +2,9 @@ EXP_NAME = ''
 MODEL_NAME = 'uncond_dcgan'
 DATASET = 'CUB_200_2011'  #'cifar10'
 IMG_SIZE = 64
-CLASSNAME = '' #'ship'
+CLASSNAME = 'crop' #'ship'
 LOAD_MODEL = '' #'64_cifar10_uncond_dcgan_horse_400'
-BASE_COMPILEDIR = 'tmp/%s_%s_%d'%(DATASET, CLASSNAME, IMG_SIZE)
+BASE_COMPILEDIR = 'tmp/%s_%s_%s_%d'%(DATASET, CLASSNAME, MODEL_NAME, IMG_SIZE)
 GPU_ID = 0
 MODEL_DIR = 'models'
 SAMPLES_DIR = 'samples'
@@ -27,7 +27,6 @@ clip = 0.01
 
 import sys
 sys.path.append('..')
-#sys.path.append('/home/yumin/codes/dcgan_code')
 
 import os
 import json
