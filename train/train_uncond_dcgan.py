@@ -1,8 +1,8 @@
 EXP_NAME = ''
 MODEL_NAME = 'uncond_dcgan'
-DATASET = 'CUB_200_2011'  #'cifar10'
+DATASET = 'google_car' #'cifar-10-batches-py' #'CUB_200_2011'  #'cifar10'
 IMG_SIZE = 64
-CLASSNAME = 'crop' #'ship'
+CLASSNAME = 'truck' #'truck' #'ship'
 LOAD_MODEL = '' #'64_cifar10_uncond_dcgan_horse_400'
 BASE_COMPILEDIR = 'tmp/%s_%s_%s_%d'%(DATASET, CLASSNAME, MODEL_NAME, IMG_SIZE)
 GPU_ID = 0
@@ -69,7 +69,7 @@ def inverse_transform(X):
     return X
 
 
-desc = '%s_%s_%s_%s'%(EXP_NAME, DATASET, MODEL_NAME, CLASSNAME)
+desc = '%s_%s_%s_%s_tmp'%(EXP_NAME, DATASET, MODEL_NAME, CLASSNAME)
 model_dir = '%s/%s'%(MODEL_DIR, desc)
 samples_dir = '%s/%s'%(SAMPLES_DIR, desc)
 if not os.path.exists('logs/'):
@@ -90,7 +90,7 @@ difn = inits.Normal(scale=0.02)
 gain_ifn = inits.Normal(loc=1., scale=0.02)
 bias_ifn = inits.Constant(c=0.)
 
-gw  = gifn((nz, ngf*8*4*4), 'gw')
+gw = gifn((nz, ngf*8*4*4), 'gw')
 gg = gain_ifn((ngf*8*4*4), 'gg')
 gb = bias_ifn((ngf*8*4*4), 'gb')
 gw2 = gifn((ngf*8, ngf*4, 5, 5), 'gw2')
@@ -186,9 +186,9 @@ if LOSS_TYPE=='WGAN':
     #_clip_d = theano.function([], updates=clip_updates)
 print '%.2f seconds to compile theano functions'%(time()-t)
 
-vis_idxs = py_rng.sample(np.arange(len(vaX)), 81)
+vis_idxs = py_rng.sample(np.arange(len(vaX)), 64)
 vaX_vis = inverse_transform(vaX[vis_idxs])
-color_grid_vis(vaX_vis, (9, 9), os.path.join(samples_dir, '%s_etl_test.png'%desc))
+color_grid_vis(vaX_vis, (8, 8), os.path.join(samples_dir, '%s_etl_test.png'%desc))
 
 sample_zmb = floatX(np_rng.uniform(-1., 1., size=(100, nz)))
 

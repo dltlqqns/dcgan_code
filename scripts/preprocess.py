@@ -8,8 +8,8 @@ from utils import mkdir_p
 import numpy as np
 import platform
 
-DATASET = 'CUB_200_2011' #'cifar-10-batches-py' #'web5000'
-CLASSNAME = '' #'ship'
+DATASET = 'google_car' #'CUB_200_2011' #'cifar-10-batches-py' #'web5000'
+CLASSNAME = 'cruiser' #'ship'
 IMG_SIZE = 64
 CIFAR_CLASSES = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 if platform.system()=='Linux':
@@ -44,7 +44,8 @@ def convert_dataset_pickle(root_dir, dataset, classname, img_size):
     else:
         print("Generate pickle file from image folder!!")
         #filenames = glob.glob(os.path.join(root_dir, classname, '*.jpg'))
-        filenames = glob.glob(os.path.join(root_dir, 'images', '*/*.jpg')) #cub200
+        filenames = glob.glob(os.path.join(root_dir, classname, '*.jpg'))
+        #filenames = glob.glob(os.path.join(root_dir, 'images', '*/*.jpg')) #cub200
         print("#img: " + str(len(filenames)))
 
         imgs = []

@@ -1,6 +1,34 @@
+EXP_NAME = ''
+MODEL_NAME = 'cond_dcgan'
+DATASET = 'google_car' #'cifar-10-batches-py'  #'cifar10'
+IMG_SIZE = 64 #32
+LOAD_MODEL = '' #'64_cifar10_uncond_dcgan_horse_400'
+GPU_ID = 0
+MODEL_DIR = 'models'
+SAMPLES_DIR = 'samples'
+LOSS_TYPE = 'GAN' #'GAN'
+NSAMPLE_PER_CLASS = 10000 #TODO
+CLASSNAMES = ['ambulance', 'bus', 'cab', 'coupe', 'cruiser', 'truck']
+CLASSNAME = 'abcct' #'ship' #??
+BASE_COMPILEDIR = 'tmp/%s_%s_%s_%d'%(DATASET, CLASSNAME, MODEL_NAME, IMG_SIZE)
+
+k = 1             # # of discrim updates for each gen update
+l2 = 2.5e-5       # l2 weight decay
+b1 = 0.5          # momentum term of adam
+nc = 3            # # of channels in image
+ny = 6 #10           # # of classes
+nbatch = 128      # # of examples in batch
+npx = IMG_SIZE          # # of pixels width/height of images
+nz = 100          # # of dim for Z
+ngf = 128        # # of gen filters in first conv layer
+ndf = 128          # # of discrim filters in first conv layer
+nx = npx*npx*nc   # # of dimensions in X
+niter = 400       # # of iter at starting learning rate
+niter_decay = 400 # # of iter to linearly decay learning rate to zero
+lr = 0.0002       # initial learning rate for adam
+
 import sys
-#sys.path.append('..')
-sys.path.append('/home/yumin/codes/dcgan_code')
+sys.path.append('..')
 
 import os
 import json
@@ -10,9 +38,11 @@ from tqdm import tqdm
 from matplotlib import pyplot as plt
 from sklearn.externals import joblib
 
+os.environ['THEANO_FLAGS'] = 'base_compiledir=%s, device=gpu%d'%(BASE_COMPILEDIR, GPU_ID)
 import theano
 import theano.tensor as T
 from theano.sandbox.cuda.dnn import dnn_conv
+print("Base compile directory: %s"%theano.config.base_compiledir)
 
 from lib import activations
 from lib import updates
@@ -26,6 +56,22 @@ from lib.metrics import nnc_score, nnd_score
 
 from load import * 
 
+# adhoc comment
+"""
+if DATASET=='cifar10':
+    load_dataset = load_cifar10
+elif DATASET=='web':
+    load_dataset = load_web
+else:
+    error('unsupported dataset!')
+
+trX, vaX, teX, trY, vaY, teY = load_dataset(IMG_SIZE, NSAMPLE_PER_CLASS)
+"""
+trX, vaX, teX, trY, vaY, teY = load_cond(DATASET, CLASSNAMES, IMG_SIZE, NSAMPLE_PER_CLASS)
+ntrain, nval, ntest = len(trX), len(vaX), len(teX)
+
+vaX = floatX(vaX)/127.5 - 1.
+
 def transform(X):
     #X = [center_crop(x, npx) for x in X]
     #return floatX(X).transpose(0, 3, 1, 2)/127.5 - 1.
@@ -35,41 +81,9 @@ def inverse_transform(X):
     X = (X.reshape(-1, nc, npx, npx).transpose(0,2,3,1)+1)*127.5
     return X
 
-DATASET = 'web'
-IMG_SIZE = 128
-NSAMPLE_PER_CLASS = 1000
-
-k = 1             # # of discrim updates for each gen update
-l2 = 2.5e-5       # l2 weight decay
-b1 = 0.5          # momentum term of adam
-nc = 3            # # of channels in image
-ny = 10           # # of classes
-nbatch = 128      # # of examples in batch
-npx = 128          # # of pixels width/height of images
-nz = 100          # # of dim for Z
-ngf = 64          # # of gen filters in first conv layer
-ndf = 64          # # of discrim filters in first conv layer
-nx = npx*npx*nc   # # of dimensions in X
-niter = 200       # # of iter at starting learning rate
-niter_decay = 200 # # of iter to linearly decay learning rate to zero
-lr = 0.0002       # initial learning rate for adam
-
-if DATASET=='cifar10':
-    load_dataset = load_cifar10
-elif DATASET=='web':
-    load_dataset = load_web
-else:
-    error('unsupported dataset!')
-
-trX, vaX, teX, trY, vaY, teY = load_dataset(IMG_SIZE, NSAMPLE_PER_CLASS)
-
-vaX = floatX(vaX)/127.5 - 1.
-ntrain, nval, ntest = len(trX), len(vaX), len(teX)
-
-
-desc = '%s_cond_dcgan_%d'%(DATASET, NSAMPLE_PER_CLASS)
-model_dir = 'models/%s'%desc
-samples_dir = 'samples/%s'%desc
+desc = '%s_%s_%s_%s_%d'%(EXP_NAME, DATASET, MODEL_NAME, CLASSNAME, NSAMPLE_PER_CLASS)
+model_dir = '%s/%s'%(MODEL_DIR, desc)
+samples_dir = '%s/%s'%(SAMPLES_DIR, desc)
 if not os.path.exists('logs/'):
     os.makedirs('logs/')
 if not os.path.exists(model_dir):
@@ -88,21 +102,22 @@ difn = inits.Normal(scale=0.02)
 gain_ifn = inits.Normal(loc=1., scale=0.02)
 bias_ifn = inits.Constant(c=0.)
 
-gw  = gifn((nz+ny, ngf*16*4*4), 'gw')
-gg = gain_ifn((ngf*16*4*4), 'gg')
-gb = bias_ifn((ngf*16*4*4), 'gb')
-gw2 = gifn((ngf*16+ny, ngf*8, 5, 5), 'gw2')
-gg2 = gain_ifn((ngf*8), 'gg2')
-gb2 = bias_ifn((ngf*8), 'gb2')
-gw3 = gifn((ngf*8+ny, ngf*4, 5, 5), 'gw3')
-gg3 = gain_ifn((ngf*4), 'gg3')
-gb3 = bias_ifn((ngf*4), 'gb3')
-gw4 = gifn((ngf*4+ny, ngf*2, 5, 5), 'gw4')
-gg4 = gain_ifn((ngf*2), 'gg4')
-gb4 = bias_ifn((ngf*2), 'gb4')
-gw5 = gifn((ngf*2+ny, ngf, 5, 5), 'gw5')
-gg5 = gain_ifn((ngf), 'gg5')
-gb5 = bias_ifn((ngf), 'gb5')
+cc = 1
+gw  = gifn((nz+ny, ngf*8*cc*4*4), 'gw')
+gg = gain_ifn((ngf*8*cc*4*4), 'gg')
+gb = bias_ifn((ngf*8*cc*4*4), 'gb')
+gw2 = gifn((ngf*8*cc+ny, ngf*4*cc, 5, 5), 'gw2')
+gg2 = gain_ifn((ngf*4*cc), 'gg2')
+gb2 = bias_ifn((ngf*4*cc), 'gb2')
+gw3 = gifn((ngf*4*cc+ny, ngf*2*cc, 5, 5), 'gw3')
+gg3 = gain_ifn((ngf*2*cc), 'gg3')
+gb3 = bias_ifn((ngf*2*cc), 'gb3')
+gw4 = gifn((ngf*2*cc+ny, ngf, 5, 5), 'gw4')
+gg4 = gain_ifn((ngf), 'gg4')
+gb4 = bias_ifn((ngf), 'gb4')
+#gw5 = gifn((ngf*cc+ny, ngf, 5, 5), 'gw5')
+#gg5 = gain_ifn((ngf), 'gg5')
+#gb5 = bias_ifn((ngf), 'gb5')
 gwx = gifn((ngf+ny, nc, 5, 5), 'gwx')
 
 dw  = difn((ndf, nc+ny, 5, 5), 'dw')
@@ -115,19 +130,24 @@ db3 = bias_ifn((ndf*4), 'db3')
 dw4 = difn((ndf*8, ndf*4+ny, 5, 5), 'dw4')
 dg4 = gain_ifn((ndf*8), 'dg4')
 db4 = bias_ifn((ndf*8), 'db4')
-dw5 = difn((ndf*16, ndf*8+ny, 5, 5), 'dw5')
-dg5 = gain_ifn((ndf*16), 'dg5')
-db5 = bias_ifn((ndf*16), 'db5')
-dwy = difn((ndf*16*4*4+ny, 1), 'dwy')
+dwy = difn((ndf*8*4*4+ny, 1), 'dwy')
+#dw5 = difn((ndf*16, ndf*8+ny, 5, 5), 'dw5')
+#dg5 = gain_ifn((ndf*16), 'dg5')
+#db5 = bias_ifn((ndf*16), 'db5')
+#dwy = difn((ndf*16*4*4+ny, 1), 'dwy')
 
-gen_params = [gw, gg, gb, gw2, gg2, gb2, gw3, gg3, gb3, gw4, gg4, gb4, gw5, gg5, gb5, gwx]
-discrim_params = [dw, dw2, dg2, db2, dw3, dg3, db3, dw4, dg4, db4, dw5, dg5, db5, dwy]
+gen_params = [gw, gg, gb, gw2, gg2, gb2, gw3, gg3, gb3, gw4, gg4, gb4, gwx]
+discrim_params = [dw, dw2, dg2, db2, dw3, dg3, db3, dw4, dg4, db4, dwy]
+#gen_params = [gw, gg, gb, gw2, gg2, gb2, gw3, gg3, gb3, gw4, gg4, gb4, gw5, gg5, gb5, gwx]
+#discrim_params = [dw, dw2, dg2, db2, dw3, dg3, db3, dw4, dg4, db4, dw5, dg5, db5, dwy]
 
-def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
+def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
+#def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
     yb = Y.dimshuffle(0, 1, 'x', 'x')
     Z = T.concatenate([Z, Y], axis=1)
     h = relu(batchnorm(T.dot(Z, w), g=g, b=b))
-    h = h.reshape((h.shape[0], ngf*16, 4, 4))
+    #h = h.reshape((h.shape[0], ngf*16, 4, 4))
+    h = h.reshape((h.shape[0], ngf*8*cc, 4, 4))
     h = conv_cond_concat(h, yb)
     h2 = relu(batchnorm(deconv(h, w2, subsample=(2, 2), border_mode=(2, 2)), g=g2, b=b2))
     h2 = conv_cond_concat(h2, yb)
@@ -135,12 +155,14 @@ def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
     h3 = conv_cond_concat(h3, yb)
     h4 = relu(batchnorm(deconv(h3, w4, subsample=(2, 2), border_mode=(2, 2)), g=g4, b=b4))
     h4 = conv_cond_concat(h4, yb)
-    h5 = relu(batchnorm(deconv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5))
-    h5 = conv_cond_concat(h5, yb)
-    x = tanh(deconv(h5, wx, subsample=(2, 2), border_mode=(2, 2)))
+    x = tanh(deconv(h4, wx, subsample=(2, 2), border_mode=(2, 2)))
+    #h5 = relu(batchnorm(deconv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5))
+    #h5 = conv_cond_concat(h5, yb)
+    #x = tanh(deconv(h5, wx, subsample=(2, 2), border_mode=(2, 2)))
     return x
 
-def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wy):
+def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, wy):
+#def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wy):
     yb = Y.dimshuffle(0, 1, 'x', 'x')
     X = conv_cond_concat(X, yb)
     h = lrelu(dnn_conv(X, w, subsample=(2, 2), border_mode=(2, 2)))
@@ -150,11 +172,13 @@ def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wy):
     h3 = lrelu(batchnorm(dnn_conv(h2, w3, subsample=(2, 2), border_mode=(2, 2)), g=g3, b=b3))
     h3 = conv_cond_concat(h3, yb)
     h4 = lrelu(batchnorm(dnn_conv(h3, w4, subsample=(2, 2), border_mode=(2, 2)), g=g4, b=b4))
-    h4 = conv_cond_concat(h4, yb)
-    h5 = lrelu(batchnorm(dnn_conv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5))
-    h5 = T.flatten(h5, 2)
-    h5 = T.concatenate([h5, Y], axis=1)
-    y = sigmoid(T.dot(h5, wy))
+    h4 = T.flatten(h4, 2)
+    h4 = T.concatenate([h4, Y], axis=1)
+    y = sigmoid(T.dot(h4, wy))
+    #h5 = lrelu(batchnorm(dnn_conv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5))
+    #h5 = T.flatten(h5, 2)
+    #h5 = T.concatenate([h5, Y], axis=1)
+    #y = sigmoid(T.dot(h5, wy))
     return y
 
 X = T.tensor4()
@@ -189,13 +213,14 @@ _train_d = theano.function([X, Z, Y], cost, updates=d_updates)
 _gen = theano.function([Z, Y], gX)
 print('%.2f seconds to compile theano functions'%(time()-t))
 
+# TODO
 tr_idxs = np.arange(len(trX))
-trX_vis = np.asarray([[trX[i] for i in py_rng.sample(tr_idxs[trY==y], 10)] for y in range(10)]).reshape(100, -1)
+trX_vis = np.asarray([[trX[i] for i in py_rng.sample(tr_idxs[trY==y], 10)] for y in range(ny)]).reshape(ny*10, -1)
 trX_vis = inverse_transform(transform(trX_vis))
-color_grid_vis(trX_vis, (10, 10), 'samples/%s_etl_test.png'%desc)
+color_grid_vis(trX_vis, (ny, 10), 'samples/%s_etl_test.png'%desc)
 
-sample_zmb = floatX(np_rng.uniform(-1., 1., size=(100, nz)))
-sample_ymb = floatX(OneHot(np.asarray([[i for _ in range(ny)] for i in range(ny)]).flatten(), ny))
+sample_zmb = floatX(np_rng.uniform(-1., 1., size=(10*ny, nz)))
+sample_ymb = floatX(OneHot(np.asarray([[i for _ in range(10)] for i in range(ny)]).flatten(), ny))
 
 def gen_samples(n, nbatch=128):
     samples = []
@@ -222,16 +247,21 @@ log_fields = [
     'n_updates', 
     'n_examples', 
     'n_seconds',
-    '1k_va_nnc_acc', 
-    '10k_va_nnc_acc', 
-    '100k_va_nnc_acc',
-    '1k_va_nnd',
-    '10k_va_nnd',
-    '100k_va_nnd',
     'g_cost',
     'd_cost',
 ]
 
+vaX = vaX.reshape(len(vaX), -1)
+
+# Load pretrained weight
+if LOAD_MODEL!='':
+    gen_load_path = '../pretrained/%s_gen_params.jl'%LOAD_MODEL
+    discrim_load_path = '../pretrained/%s_discrim_params.jl'%LOAD_MODEL
+    [p.set_value(v) for v,p in zip(joblib.load(gen_load_path), gen_params)]
+    [p.set_value(v) for v,p in zip(joblib.load(discrim_load_path), discrim_params)]
+    print("Model %s loaded!!"%LOAD_MODEL)
+
+    
 print(desc.upper())
 n_updates = 0
 n_check = 0
@@ -254,24 +284,19 @@ for epoch in range(1, niter+niter_decay+1):
     if False: #(epoch-1) % 5 == 0:
         g_cost = float(cost[0])
         d_cost = float(cost[1])
-        gX, gY = gen_samples(100000)
-        gX = gX.reshape(len(gX), -1)
-        va_nnc_acc_1k = nnc_score(gX[:1000], gY[:1000], vaX, vaY, metric='euclidean')
-        va_nnc_acc_10k = nnc_score(gX[:10000], gY[:10000], vaX, vaY, metric='euclidean')
-        va_nnc_acc_100k = nnc_score(gX[:100000], gY[:100000], vaX, vaY, metric='euclidean')
-        va_nnd_1k = nnd_score(gX[:1000], vaX, metric='euclidean')
-        va_nnd_10k = nnd_score(gX[:10000], vaX, metric='euclidean')
-        va_nnd_100k = nnd_score(gX[:100000], vaX, metric='euclidean')
-        log = [n_epochs, n_updates, n_examples, time()-t, va_nnc_acc_1k, va_nnc_acc_10k, va_nnc_acc_100k, va_nnd_1k, va_nnd_10k, va_nnd_100k, g_cost, d_cost]
-        print('%.0f %.2f %.2f %.2f %.4f %.4f %.4f %.4f %.4f'%(epoch, va_nnc_acc_1k, va_nnc_acc_10k, va_nnc_acc_100k, va_nnd_1k, va_nnd_10k, va_nnd_100k, g_cost, d_cost))
+        log = [n_epochs, n_updates, n_examples, time()-t, g_cost, d_cost]
         f_log.write(json.dumps(dict(zip(log_fields, log)))+'\n')
         f_log.flush()
 
     samples = np.asarray(_gen(sample_zmb, sample_ymb))
-    color_grid_vis(inverse_transform(samples), (10, 10), 'samples/%s/%d.png'%(desc, n_epochs))
+    color_grid_vis(inverse_transform(samples), (ny, 10), 'samples/%s/%d.png'%(desc, n_epochs))
     n_epochs += 1
     if n_epochs > niter:
         lrt.set_value(floatX(lrt.get_value() - lr/niter_decay))
-    if n_epochs in [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200]:
-        joblib.dump([p.get_value() for p in gen_params], 'models/%s/%d_gen_params.jl'%(desc, n_epochs))
-        joblib.dump([p.get_value() for p in discrim_params], 'models/%s/%d_discrim_params.jl'%(desc, n_epochs))
+    if n_epochs in [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]:
+        joblib.dump([p.get_value() for p in gen_params], os.path.join(model_dir, '%d_gen_params.jl'%n_epochs))
+        joblib.dump([p.get_value() for p in discrim_params], os.path.join(model_dir, '%d_discrim_params.jl'%n_epochs))
+
+# Save last model
+joblib.dump([p.get_value() for p in discrim_params], os.path.join(model_dir, '%d_discrim_params.jl'%epoch))
+joblib.dump([p.get_value() for p in gen_params], os.path.join(model_dir, '%d_gen_params.jl'%epoch))

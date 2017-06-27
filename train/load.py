@@ -136,7 +136,7 @@ def load_uncond(dataset, classname, img_size):
     with open(filepath,'rb') as f:
         trX = pickle.load(f)
     if trX[0].shape[0]!=img_size and trX[0].shape[1]!=img_size:
-        print('resizin image')
+        print('resizing image')
         trX_re = [scipy.misc.imresize(img, [img_size, img_size]) for img in trX]
     else:
         trX_re = trX
@@ -149,3 +149,30 @@ def load_uncond(dataset, classname, img_size):
     trX = trX[:boundary]
     teX = []
     return trX, vaX, teX, [], [], []
+
+def load_cond(dataset, classnames, img_size, num_sample_per_class):
+    trX = np.empty((0, img_size*img_size*NUM_CHANNEL), dtype=np.float32)
+    vaX = np.empty((0, img_size*img_size*NUM_CHANNEL), dtype=np.float32)
+    trY = np.empty(0, dtype=np.int)
+    vaY = np.empty(0, dtype=np.int)
+
+    for idx, classname in enumerate(classnames):
+        filepath = os.path.join('..', 'Data', dataset, '%dimages_%s.pickle'%(img_size, classname))
+        tmp_trX, tmp_vaX, _, _, _, _ = load_uncond(dataset, classname, img_size)
+        num_sample_tr = int(min(num_sample_per_class, tmp_trX.shape[0]))
+        num_sample_va = int(min(np.floor(num_sample_tr*0.1), tmp_vaX.shape[0]))
+        print('num_sample_tr, num_sample_va: %d, %d'%(num_sample_tr, num_sample_va))
+
+        sel_tr = np.random.permutation(tmp_trX.shape[0])[:num_sample_tr]
+        sel_va = np.random.permutation(tmp_vaX.shape[0])[:num_sample_va]
+
+        trX = np.concatenate((trX, tmp_trX[sel_tr]), axis=0)
+        vaX = np.concatenate((vaX, tmp_vaX[sel_va]), axis=0)
+        trY = np.concatenate((trY, idx*np.ones(num_sample_tr, dtype=np.int)), axis=0)
+        vaY = np.concatenate((vaY, idx*np.ones(num_sample_va, dtype=np.int)), axis=0)
+        trX, trY = shuffle(trX, trY)
+
+
+    print('final training set size:')
+    print(trX.shape)
+    return trX, vaX, [], trY, vaY, []
