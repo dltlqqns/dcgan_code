@@ -1,7 +1,7 @@
 EXP_NAME = '128'
 MODEL_NAME = 'cond_dcgan'
 DATASET = 'web_car' #'cifar-10-batches-py'  #'cifar10'
-IMG_SIZE = 64 #32
+IMG_SIZE = 128 #32
 LOAD_MODEL = '' #'64_cifar10_uncond_dcgan_horse_400'
 GPU_ID = 0
 MODEL_DIR = 'models'
@@ -9,7 +9,7 @@ SAMPLES_DIR = 'samples'
 LOSS_TYPE = 'GAN' #'GAN'
 NSAMPLE_PER_CLASS = 10000 #TODO
 CLASSNAMES = ['ambulance', 'bus', 'cab', 'coupe', 'cruiser']
-CLASSNAME = 'abcc' #'ship' #??
+CLASSNAME = 'abccc' #'ship' #??
 BASE_COMPILEDIR = 'tmp/%s_%s_%s_%d'%(DATASET, CLASSNAME, MODEL_NAME, IMG_SIZE)
 
 k = 1             # # of discrim updates for each gen update
@@ -139,12 +139,12 @@ dg4 = gain_ifn((ndf*8), 'dg4')
 db4 = bias_ifn((ndf*8), 'db4')
 nd_final = ndf*8
 if IMG_SIZE>=128:
-    dw5 = difn((ndf*16, ndf*8, 5, 5), 'dw5')        #128
+    dw5 = difn((ndf*16, ndf*8+ny, 5, 5), 'dw5')        #128
     dg5 = gain_ifn((ndf*16), 'dg5')                 #128
     db5 = bias_ifn((ndf*16), 'db5')                 #128
     nd_final = ndf*16
     if IMG_SIZE==256:
-        dw6 = difn((ndf*32, ndf*16, 5, 5), 'dw6')        #256
+        dw6 = difn((ndf*32, ndf*16+ny, 5, 5), 'dw6')        #256
         dg6 = gain_ifn((ndf*32), 'dg6')                 #256
         db6 = bias_ifn((ndf*32), 'db6')                 #256
         nd_final = ndf*32
@@ -167,8 +167,8 @@ if IMG_SIZE>=128:
         discrim_params.insert(-1, dg6)
         discrim_params.insert(-1, db6)
 
-def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
-#def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
+#def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
+def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
 #def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, w6, g6, b6, wx):
     yb = Y.dimshuffle(0, 1, 'x', 'x')
     Z = T.concatenate([Z, Y], axis=1)
@@ -195,8 +195,8 @@ def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
         x = tanh(deconv(h6, wx, subsample=(2, 2), border_mode=(2, 2)))
     return x
 
-def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, wy):
-#def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wy):
+#def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, wy):
+def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wy):
 #def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, w6, g6, b6, wy):
     yb = Y.dimshuffle(0, 1, 'x', 'x')
     X = conv_cond_concat(X, yb)
@@ -215,6 +215,7 @@ def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, wy):
         h4 = conv_cond_concat(h4, yb)
         h5 = lrelu(batchnorm(dnn_conv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5))   #128
         h5 = T.flatten(h5, 2)
+        h5 = T.concatenate([h5, Y], axis=1)
         y = T.dot(h5, wy)
     elif IMG_SIZE==256:
         h4 = conv_cond_concat(h4, yb)
@@ -222,6 +223,7 @@ def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, wy):
         h5 = conv_cond_concat(h5, yb)
         h6 = lrelu(batchnorm(dnn_conv(h5, w6, subsample=(2, 2), border_mode=(2, 2)), g=g6, b=b6))   #256
         h6 = T.flatten(h6, 2)
+        h6 = T.concatenate([h6, Y], axis=1)
         y = T.dot(h6, wy)
 
     if LOSS_TYPE=='GAN':
