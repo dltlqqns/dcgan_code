@@ -19,6 +19,7 @@ nz = 100          # # of dim for Z
 ngf = 1024         # # of gen filters in first conv layer
 ndf = 64         # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
+ny = 5
 LOAD_GEN_PATHS = ['./models/_CUB_200_2011_uncond_dcgan_/200_gen_params.jl', \
                   './models/_CUB_200_2011_uncond_dcgan_/400_gen_params.jl', \
                   './models/_CUB_200_2011_uncond_dcgan_/600_gen_params.jl', \
