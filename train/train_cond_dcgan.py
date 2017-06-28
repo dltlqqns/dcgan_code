@@ -1,4 +1,4 @@
-EXP_NAME = ''
+EXP_NAME = '128'
 MODEL_NAME = 'cond_dcgan'
 DATASET = 'web_car' #'cifar-10-batches-py'  #'cifar10'
 IMG_SIZE = 64 #32
@@ -20,8 +20,8 @@ ny = len(CLASSNAMES) #10           # # of classes
 nbatch = 128      # # of examples in batch
 npx = IMG_SIZE          # # of pixels width/height of images
 nz = 100          # # of dim for Z
-ngf = 128        # # of gen filters in first conv layer
-ndf = 128          # # of discrim filters in first conv layer
+ngf = 1024        # # of gen filters in first conv layer
+ndf = 64          # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
 niter = 400       # # of iter at starting learning rate
 niter_decay = 400 # # of iter to linearly decay learning rate to zero
@@ -102,7 +102,6 @@ difn = inits.Normal(scale=0.02)
 gain_ifn = inits.Normal(loc=1., scale=0.02)
 bias_ifn = inits.Constant(c=0.)
 
-cc = 1
 gw  = gifn((nz+ny, ngf*4*4), 'gw')
 gg = gain_ifn((ngf*4*4), 'gg')
 gb = bias_ifn((ngf*4*4), 'gb')
@@ -175,7 +174,7 @@ def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
     Z = T.concatenate([Z, Y], axis=1)
     h = relu(batchnorm(T.dot(Z, w), g=g, b=b))
     #h = h.reshape((h.shape[0], ngf*16, 4, 4))
-    h = h.reshape((h.shape[0], ngf*8*cc, 4, 4))
+    h = h.reshape((h.shape[0], ngf, 4, 4))
     h = conv_cond_concat(h, yb)
     h2 = relu(batchnorm(deconv(h, w2, subsample=(2, 2), border_mode=(2, 2)), g=g2, b=b2))
     h2 = conv_cond_concat(h2, yb)
