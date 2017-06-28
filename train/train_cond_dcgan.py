@@ -1,6 +1,6 @@
 EXP_NAME = ''
 MODEL_NAME = 'cond_dcgan'
-DATASET = 'google_car' #'cifar-10-batches-py'  #'cifar10'
+DATASET = 'web_car' #'cifar-10-batches-py'  #'cifar10'
 IMG_SIZE = 64 #32
 LOAD_MODEL = '' #'64_cifar10_uncond_dcgan_horse_400'
 GPU_ID = 0
@@ -8,15 +8,15 @@ MODEL_DIR = 'models'
 SAMPLES_DIR = 'samples'
 LOSS_TYPE = 'GAN' #'GAN'
 NSAMPLE_PER_CLASS = 10000 #TODO
-CLASSNAMES = ['ambulance', 'bus', 'cab', 'coupe', 'cruiser', 'truck']
-CLASSNAME = 'abcct' #'ship' #??
+CLASSNAMES = ['ambulance', 'bus', 'cab', 'coupe', 'cruiser']
+CLASSNAME = 'abcc' #'ship' #??
 BASE_COMPILEDIR = 'tmp/%s_%s_%s_%d'%(DATASET, CLASSNAME, MODEL_NAME, IMG_SIZE)
 
 k = 1             # # of discrim updates for each gen update
 l2 = 2.5e-5       # l2 weight decay
 b1 = 0.5          # momentum term of adam
 nc = 3            # # of channels in image
-ny = 6 #10           # # of classes
+ny = len(CLASSNAMES) #10           # # of classes
 nbatch = 128      # # of examples in batch
 npx = IMG_SIZE          # # of pixels width/height of images
 nz = 100          # # of dim for Z
