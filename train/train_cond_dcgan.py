@@ -276,14 +276,14 @@ def gen_samples(n, nbatch=128):
     labels = []
     n_gen = 0
     for i in range(n/nbatch):
-        ymb = floatX(OneHot(np_rng.randint(0, 10, nbatch), ny))
+        ymb = floatX(OneHot(np_rng.randint(0, ny, nbatch), ny))
         zmb = floatX(np_rng.uniform(-1., 1., size=(nbatch, nz)))
         xmb = _gen(zmb, ymb)
         samples.append(xmb)
         labels.append(np.argmax(ymb, axis=1))
         n_gen += len(xmb)
     n_left = n-n_gen
-    ymb = floatX(OneHot(np_rng.randint(0, 10, n_left), ny))
+    ymb = floatX(OneHot(np_rng.randint(0, ny, n_left), ny))
     zmb = floatX(np_rng.uniform(-1., 1., size=(n_left, nz)))
     xmb = _gen(zmb, ymb)
     samples.append(xmb)    

@@ -12,11 +12,12 @@ from lib.theano_utils import floatX, sharedX
 from sklearn.externals import joblib
 from inception_score import get_inception_score
 
+IMG_SIZE = 128
 nc = 3            # # of channels in image
-npx = 64          # # of pixels width/height of images
+npx = IMG_SIZE          # # of pixels width/height of images
 nz = 100          # # of dim for Z
-ngf = 128         # # of gen filters in first conv layer
-ndf = 128         # # of discrim filters in first conv layer
+ngf = 1024         # # of gen filters in first conv layer
+ndf = 64         # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
 LOAD_GEN_PATHS = ['./models/_CUB_200_2011_uncond_dcgan_/200_gen_params.jl', \
                   './models/_CUB_200_2011_uncond_dcgan_/400_gen_params.jl', \
@@ -35,23 +36,36 @@ gifn = inits.Normal(scale=0.02)
 difn = inits.Normal(scale=0.02)
 gain_ifn = inits.Normal(loc=1., scale=0.02)
 bias_ifn = inits.Constant(c=0.)
-gw  = gifn((nz, ngf*8*4*4), 'gw')
-gg = gain_ifn((ngf*8*4*4), 'gg')
-gb = bias_ifn((ngf*8*4*4), 'gb')
-gw2 = gifn((ngf*8, ngf*4, 5, 5), 'gw2')
-gg2 = gain_ifn((ngf*4), 'gg2')
-gb2 = bias_ifn((ngf*4), 'gb2')
-gw3 = gifn((ngf*4, ngf*2, 5, 5), 'gw3')
-gg3 = gain_ifn((ngf*2), 'gg3')
-gb3 = bias_ifn((ngf*2), 'gb3')
-gw4 = gifn((ngf*2, ngf, 5, 5), 'gw4')
-gg4 = gain_ifn((ngf), 'gg4')
-gb4 = bias_ifn((ngf), 'gb4')
-gwx = gifn((ngf, nc, 5, 5), 'gwx')
+gw  = gifn((nz, ngf*4*4), 'gw')
+gg = gain_ifn((ngf*4*4), 'gg')
+gb = bias_ifn((ngf*4*4), 'gb')
+gw2 = gifn((ngf, ngf/2, 5, 5), 'gw2')
+gg2 = gain_ifn((ngf/2), 'gg2')
+gb2 = bias_ifn((ngf/2), 'gb2')
+gw3 = gifn((ngf/2, ngf*2, 5, 5), 'gw3')
+gg3 = gain_ifn((ngf/4), 'gg3')
+gb3 = bias_ifn((ngf/4), 'gb3')
+gw4 = gifn((ngf/4, ngf/8, 5, 5), 'gw4')
+gg4 = gain_ifn((ngf/8), 'gg4')
+gb4 = bias_ifn((ngf/8), 'gb4')
+ng_final = ngf/8
+if IMG_SIZE>=128:
+    gw5 = gifn((ngf/8, ngf/16, 5, 5), 'gw5')      #128
+    gg5 = gain_ifn((ngf/16), 'gg5')                #128
+    gb5 = bias_ifn((ngf/16), 'gb5')                #128
+    ng_final = ngf/16
+    if IMG_SIZE==256:
+        gw6 = gifn((ngf/16, ngf/32, 5, 5), 'gw6')    #256
+        gg6 = gain_ifn((ngf/32), 'gg6')                #256
+        gb6 = bias_ifn((ngf/32), 'gb6')                #256
+        ng_final = ngf/32
+gwx = gifn((ng_final, nc, 5, 5), 'gwx')
 
 gen_params = [gw, gg, gb, gw2, gg2, gb2, gw3, gg3, gb3, gw4, gg4, gb4, gwx]
 
-def gen(Z, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
+#def gen(Z, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
+def gen(Z, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
+#def gen(Z, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, w6, g6, b6, wx):
     h = relu(batchnorm(T.dot(Z, w), g=g, b=b))
     h = h.reshape((h.shape[0], ngf*8, 4, 4))
     h2 = relu(batchnorm(deconv(h, w2, subsample=(2, 2), border_mode=(2, 2)), g=g2, b=b2))
