@@ -10,11 +10,12 @@ import platform
 
 DATASET = 'web_car' #'CUB_200_2011' #'cifar-10-batches-py' #'web5000'
 CLASSNAMES = ['ambulance', 'bus', 'cab', 'coupe', 'cruiser', 'truck']  #'ship'
-IMG_SIZE = 64
+IMG_SIZE = 128
 CIFAR_CLASSES = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 if platform.system()=='Linux':
     #ROOT_DIR = '/home/yumin/dataset/%s/'%DATASET
-    ROOT_DIR = '/home/yumin/codes/web_crawl/car/'
+    #ROOT_DIR = '/home/yumin/codes/web_crawl/car/'
+    ROOT_DIR = '/home/yumin/dataset/web_car/'
 else:
     ROOT_DIR = 'D:/v-yusuh/dataset/%s/'%DATASET
 

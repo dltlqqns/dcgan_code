@@ -103,22 +103,30 @@ gain_ifn = inits.Normal(loc=1., scale=0.02)
 bias_ifn = inits.Constant(c=0.)
 
 cc = 1
-gw  = gifn((nz+ny, ngf*8*cc*4*4), 'gw')
-gg = gain_ifn((ngf*8*cc*4*4), 'gg')
-gb = bias_ifn((ngf*8*cc*4*4), 'gb')
-gw2 = gifn((ngf*8*cc+ny, ngf*4*cc, 5, 5), 'gw2')
-gg2 = gain_ifn((ngf*4*cc), 'gg2')
-gb2 = bias_ifn((ngf*4*cc), 'gb2')
-gw3 = gifn((ngf*4*cc+ny, ngf*2*cc, 5, 5), 'gw3')
-gg3 = gain_ifn((ngf*2*cc), 'gg3')
-gb3 = bias_ifn((ngf*2*cc), 'gb3')
-gw4 = gifn((ngf*2*cc+ny, ngf, 5, 5), 'gw4')
-gg4 = gain_ifn((ngf), 'gg4')
-gb4 = bias_ifn((ngf), 'gb4')
-#gw5 = gifn((ngf*cc+ny, ngf, 5, 5), 'gw5')
-#gg5 = gain_ifn((ngf), 'gg5')
-#gb5 = bias_ifn((ngf), 'gb5')
-gwx = gifn((ngf+ny, nc, 5, 5), 'gwx')
+gw  = gifn((nz+ny, ngf*4*4), 'gw')
+gg = gain_ifn((ngf*4*4), 'gg')
+gb = bias_ifn((ngf*4*4), 'gb')
+gw2 = gifn((ngf+ny, ngf/2, 5, 5), 'gw2')
+gg2 = gain_ifn((ngf/2), 'gg2')
+gb2 = bias_ifn((ngf/2), 'gb2')
+gw3 = gifn((ngf/2+ny, ngf/4, 5, 5), 'gw3')
+gg3 = gain_ifn((ngf/4), 'gg3')
+gb3 = bias_ifn((ngf/4), 'gb3')
+gw4 = gifn((ngf/4+ny, ngf/8, 5, 5), 'gw4')
+gg4 = gain_ifn((ngf/8), 'gg4')
+gb4 = bias_ifn((ngf/8), 'gb4')
+ng_final = ngf/8 + ny
+if IMG_SIZE>=128:
+    gw5 = gifn((ngf/8+ny, ngf/16, 5, 5), 'gw5')      #128
+    gg5 = gain_ifn((ngf/16), 'gg5')                #128
+    gb5 = bias_ifn((ngf/16), 'gb5')                #128
+    ng_final = ngf/16 + ny
+    if IMG_SIZE==256:
+        gw6 = gifn((ngf/16+ny, ngf/32, 5, 5), 'gw6')    #256
+        gg6 = gain_ifn((ngf/32), 'gg6')                #256
+        gb6 = bias_ifn((ngf/32), 'gb6')                #256
+        ng_final = ngf/32 + ny
+gwx = gifn((ng_final, nc, 5, 5), 'gwx')
 
 dw  = difn((ndf, nc+ny, 5, 5), 'dw')
 dw2 = difn((ndf*2, ndf+ny, 5, 5), 'dw2')
@@ -130,19 +138,39 @@ db3 = bias_ifn((ndf*4), 'db3')
 dw4 = difn((ndf*8, ndf*4+ny, 5, 5), 'dw4')
 dg4 = gain_ifn((ndf*8), 'dg4')
 db4 = bias_ifn((ndf*8), 'db4')
-dwy = difn((ndf*8*4*4+ny, 1), 'dwy')
-#dw5 = difn((ndf*16, ndf*8+ny, 5, 5), 'dw5')
-#dg5 = gain_ifn((ndf*16), 'dg5')
-#db5 = bias_ifn((ndf*16), 'db5')
-#dwy = difn((ndf*16*4*4+ny, 1), 'dwy')
+nd_final = ndf*8
+if IMG_SIZE>=128:
+    dw5 = difn((ndf*16, ndf*8, 5, 5), 'dw5')        #128
+    dg5 = gain_ifn((ndf*16), 'dg5')                 #128
+    db5 = bias_ifn((ndf*16), 'db5')                 #128
+    nd_final = ndf*16
+    if IMG_SIZE==256:
+        dw6 = difn((ndf*32, ndf*16, 5, 5), 'dw6')        #256
+        dg6 = gain_ifn((ndf*32), 'dg6')                 #256
+        db6 = bias_ifn((ndf*32), 'db6')                 #256
+        nd_final = ndf*32
+dwy = difn((nd_final*4*4+ny, 1), 'dwy')
 
 gen_params = [gw, gg, gb, gw2, gg2, gb2, gw3, gg3, gb3, gw4, gg4, gb4, gwx]
 discrim_params = [dw, dw2, dg2, db2, dw3, dg3, db3, dw4, dg4, db4, dwy]
-#gen_params = [gw, gg, gb, gw2, gg2, gb2, gw3, gg3, gb3, gw4, gg4, gb4, gw5, gg5, gb5, gwx]
-#discrim_params = [dw, dw2, dg2, db2, dw3, dg3, db3, dw4, dg4, db4, dw5, dg5, db5, dwy]
+if IMG_SIZE>=128:
+    gen_params.insert(-1, gw5)
+    gen_params.insert(-1, gg5)
+    gen_params.insert(-1, gb5)
+    discrim_params.insert(-1, dw5)
+    discrim_params.insert(-1, dg5)
+    discrim_params.insert(-1, db5)
+    if IMG_SIZE==256:    
+        gen_params.insert(-1, gw6)
+        gen_params.insert(-1, gg6)
+        gen_params.insert(-1, gb6)
+        discrim_params.insert(-1, dw6)
+        discrim_params.insert(-1, dg6)
+        discrim_params.insert(-1, db6)
 
 def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
 #def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
+#def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, w6, g6, b6, wx):
     yb = Y.dimshuffle(0, 1, 'x', 'x')
     Z = T.concatenate([Z, Y], axis=1)
     h = relu(batchnorm(T.dot(Z, w), g=g, b=b))
@@ -155,14 +183,22 @@ def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
     h3 = conv_cond_concat(h3, yb)
     h4 = relu(batchnorm(deconv(h3, w4, subsample=(2, 2), border_mode=(2, 2)), g=g4, b=b4))
     h4 = conv_cond_concat(h4, yb)
-    x = tanh(deconv(h4, wx, subsample=(2, 2), border_mode=(2, 2)))
-    #h5 = relu(batchnorm(deconv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5))
-    #h5 = conv_cond_concat(h5, yb)
-    #x = tanh(deconv(h5, wx, subsample=(2, 2), border_mode=(2, 2)))
+    if IMG_SIZE==64:
+        x = tanh(deconv(h4, wx, subsample=(2, 2), border_mode=(2, 2)))
+    elif IMG_SIZE==128:
+        h5 = relu(batchnorm(deconv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5)) #128
+        h5 = conv_cond_concat(h5, yb)
+        x = tanh(deconv(h5, wx, subsample=(2, 2), border_mode=(2, 2)))
+    elif IMG_SIZE==256:
+        h5 = relu(batchnorm(deconv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5)) #128
+        h6 = relu(batchnorm(deconv(h5, w6, subsample=(2, 2), border_mode=(2, 2)), g=g6, b=b6)) #256
+        h6 = conv_cond_concat(h6, yb)
+        x = tanh(deconv(h6, wx, subsample=(2, 2), border_mode=(2, 2)))
     return x
 
 def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, wy):
 #def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wy):
+#def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, w6, g6, b6, wy):
     yb = Y.dimshuffle(0, 1, 'x', 'x')
     X = conv_cond_concat(X, yb)
     h = lrelu(dnn_conv(X, w, subsample=(2, 2), border_mode=(2, 2)))
@@ -172,13 +208,25 @@ def discrim(X, Y, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, wy):
     h3 = lrelu(batchnorm(dnn_conv(h2, w3, subsample=(2, 2), border_mode=(2, 2)), g=g3, b=b3))
     h3 = conv_cond_concat(h3, yb)
     h4 = lrelu(batchnorm(dnn_conv(h3, w4, subsample=(2, 2), border_mode=(2, 2)), g=g4, b=b4))
-    h4 = T.flatten(h4, 2)
-    h4 = T.concatenate([h4, Y], axis=1)
-    y = sigmoid(T.dot(h4, wy))
-    #h5 = lrelu(batchnorm(dnn_conv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5))
-    #h5 = T.flatten(h5, 2)
-    #h5 = T.concatenate([h5, Y], axis=1)
-    #y = sigmoid(T.dot(h5, wy))
+    if IMG_SIZE==64:
+        h4 = T.flatten(h4, 2)
+        h4 = T.concatenate([h4, Y], axis=1)
+        y = T.dot(h4, wy)
+    elif IMG_SIZE==128:
+        h4 = conv_cond_concat(h4, yb)
+        h5 = lrelu(batchnorm(dnn_conv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5))   #128
+        h5 = T.flatten(h5, 2)
+        y = T.dot(h5, wy)
+    elif IMG_SIZE==256:
+        h4 = conv_cond_concat(h4, yb)
+        h5 = lrelu(batchnorm(dnn_conv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5))   #128
+        h5 = conv_cond_concat(h5, yb)
+        h6 = lrelu(batchnorm(dnn_conv(h5, w6, subsample=(2, 2), border_mode=(2, 2)), g=g6, b=b6))   #256
+        h6 = T.flatten(h6, 2)
+        y = T.dot(h6, wy)
+
+    if LOSS_TYPE=='GAN':
+        y = sigmoid(y)
     return y
 
 X = T.tensor4()

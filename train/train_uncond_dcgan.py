@@ -1,8 +1,8 @@
-EXP_NAME = ''
+EXP_NAME = '128'
 MODEL_NAME = 'uncond_dcgan'
-DATASET = 'google_car' #'cifar-10-batches-py' #'CUB_200_2011'  #'cifar10'
-IMG_SIZE = 64
-CLASSNAME = 'truck' #'truck' #'ship'
+DATASET = 'web_car' #'cifar-10-batches-py' #'CUB_200_2011'  #'cifar10'
+IMG_SIZE = 128 
+CLASSNAME = 'bus' #'truck' #'ship'
 LOAD_MODEL = '' #'64_cifar10_uncond_dcgan_horse_400'
 BASE_COMPILEDIR = 'tmp/%s_%s_%s_%d'%(DATASET, CLASSNAME, MODEL_NAME, IMG_SIZE)
 GPU_ID = 0
@@ -15,10 +15,10 @@ l2 = 1e-5         # l2 weight decay
 b1 = 0.5          # momentum term of adam
 nc = 3            # # of channels in image
 nbatch = 128      # # of examples in batch
-npx = 64          # # of pixels width/height of images
+npx = IMG_SIZE          # # of pixels width/height of images
 nz = 100          # # of dim for Z
-ngf = 128         # # of gen filters in first conv layer
-ndf = 128         # # of discrim filters in first conv layer
+ngf = 1024         # # of gen filters in first conv layer
+ndf = 64          # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
 niter = 400*k_discrim        # # of iter at starting learning rate
 niter_decay = 400*k_discrim   # # of iter to linearly decay learning rate to zero
@@ -69,7 +69,7 @@ def inverse_transform(X):
     return X
 
 
-desc = '%s_%s_%s_%s_tmp'%(EXP_NAME, DATASET, MODEL_NAME, CLASSNAME)
+desc = '%s_%s_%s_%s'%(EXP_NAME, DATASET, MODEL_NAME, CLASSNAME)
 model_dir = '%s/%s'%(MODEL_DIR, desc)
 samples_dir = '%s/%s'%(SAMPLES_DIR, desc)
 if not os.path.exists('logs/'):
@@ -90,19 +90,30 @@ difn = inits.Normal(scale=0.02)
 gain_ifn = inits.Normal(loc=1., scale=0.02)
 bias_ifn = inits.Constant(c=0.)
 
-gw = gifn((nz, ngf*8*4*4), 'gw')
-gg = gain_ifn((ngf*8*4*4), 'gg')
-gb = bias_ifn((ngf*8*4*4), 'gb')
-gw2 = gifn((ngf*8, ngf*4, 5, 5), 'gw2')
-gg2 = gain_ifn((ngf*4), 'gg2')
-gb2 = bias_ifn((ngf*4), 'gb2')
-gw3 = gifn((ngf*4, ngf*2, 5, 5), 'gw3')
-gg3 = gain_ifn((ngf*2), 'gg3')
-gb3 = bias_ifn((ngf*2), 'gb3')
-gw4 = gifn((ngf*2, ngf, 5, 5), 'gw4')
-gg4 = gain_ifn((ngf), 'gg4')
-gb4 = bias_ifn((ngf), 'gb4')
-gwx = gifn((ngf, nc, 5, 5), 'gwx')
+gw = gifn((nz, ngf*4*4), 'gw')
+gg = gain_ifn((ngf*4*4), 'gg')
+gb = bias_ifn((ngf*4*4), 'gb')
+gw2 = gifn((ngf, ngf/2, 5, 5), 'gw2')
+gg2 = gain_ifn((ngf/2), 'gg2')
+gb2 = bias_ifn((ngf/2), 'gb2')
+gw3 = gifn((ngf/2, ngf/4, 5, 5), 'gw3')
+gg3 = gain_ifn((ngf/4), 'gg3')
+gb3 = bias_ifn((ngf/4), 'gb3')
+gw4 = gifn((ngf/4, ngf/8, 5, 5), 'gw4')
+gg4 = gain_ifn((ngf/8), 'gg4')
+gb4 = bias_ifn((ngf/8), 'gb4')
+ng_final = ngf/8
+if IMG_SIZE>=128:
+    gw5 = gifn((ngf/8, ngf/16, 5, 5), 'gw5')      #128
+    gg5 = gain_ifn((ngf/16), 'gg5')                #128
+    gb5 = bias_ifn((ngf/16), 'gb5')                #128
+    ng_final = ngf/16
+    if IMG_SIZE==256:
+        gw6 = gifn((ngf/16, ngf/32, 5, 5), 'gw6')    #256
+        gg6 = gain_ifn((ngf/32), 'gg6')                #256
+        gb6 = bias_ifn((ngf/32), 'gb6')                #256
+        ng_final = ngf/32
+gwx = gifn((ng_final, nc, 5, 5), 'gwx')
 
 dw  = difn((ndf, nc, 5, 5), 'dw')
 dw2 = difn((ndf*2, ndf, 5, 5), 'dw2')
@@ -114,30 +125,77 @@ db3 = bias_ifn((ndf*4), 'db3')
 dw4 = difn((ndf*8, ndf*4, 5, 5), 'dw4')
 dg4 = gain_ifn((ndf*8), 'dg4')
 db4 = bias_ifn((ndf*8), 'db4')
-dwy = difn((ndf*8*4*4, 1), 'dwy')
+nd_final = ndf*8 
+if IMG_SIZE>=128:
+    dw5 = difn((ndf*16, ndf*8, 5, 5), 'dw5')        #128
+    dg5 = gain_ifn((ndf*16), 'dg5')                 #128
+    db5 = bias_ifn((ndf*16), 'db5')                 #128
+    nd_final = ndf*16
+    if IMG_SIZE==256:
+        dw6 = difn((ndf*32, ndf*16, 5, 5), 'dw6')        #256
+        dg6 = gain_ifn((ndf*32), 'dg6')                 #256
+        db6 = bias_ifn((ndf*32), 'db6')                 #256
+        nd_final = ndf*32
+dwy = difn((nd_final*4*4, 1), 'dwy')
 
 gen_params = [gw, gg, gb, gw2, gg2, gb2, gw3, gg3, gb3, gw4, gg4, gb4, gwx]
 discrim_params = [dw, dw2, dg2, db2, dw3, dg3, db3, dw4, dg4, db4, dwy]
+if IMG_SIZE>=128:
+    gen_params.insert(-1, gw5)
+    gen_params.insert(-1, gg5)
+    gen_params.insert(-1, gb5)
+    discrim_params.insert(-1, dw5)
+    discrim_params.insert(-1, dg5)
+    discrim_params.insert(-1, db5)
+    if IMG_SIZE==256:    
+        gen_params.insert(-1, gw6)
+        gen_params.insert(-1, gg6)
+        gen_params.insert(-1, gb6)
+        discrim_params.insert(-1, dw6)
+        discrim_params.insert(-1, dg6)
+        discrim_params.insert(-1, db6)
 
-def gen(Z, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
+#def gen(Z, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
+def gen(Z, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
+#def gen(Z, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, w6, g6, b6, wx):
     h = relu(batchnorm(T.dot(Z, w), g=g, b=b))
-    h = h.reshape((h.shape[0], ngf*8, 4, 4))
+    h = h.reshape((h.shape[0], ngf, 4, 4))
     h2 = relu(batchnorm(deconv(h, w2, subsample=(2, 2), border_mode=(2, 2)), g=g2, b=b2))
     h3 = relu(batchnorm(deconv(h2, w3, subsample=(2, 2), border_mode=(2, 2)), g=g3, b=b3))
     h4 = relu(batchnorm(deconv(h3, w4, subsample=(2, 2), border_mode=(2, 2)), g=g4, b=b4))
-    x = tanh(deconv(h4, wx, subsample=(2, 2), border_mode=(2, 2)))
+    if IMG_SIZE==64:
+        x = tanh(deconv(h4, wx, subsample=(2, 2), border_mode=(2, 2)))
+    elif IMG_SIZE==128:
+        h5 = relu(batchnorm(deconv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5)) #128
+        x = tanh(deconv(h5, wx, subsample=(2, 2), border_mode=(2, 2)))
+    elif IMG_SIZE==256:
+        h5 = relu(batchnorm(deconv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5)) #128
+        h6 = relu(batchnorm(deconv(h5, w6, subsample=(2, 2), border_mode=(2, 2)), g=g6, b=b6)) #256
+        x = tanh(deconv(h6, wx, subsample=(2, 2), border_mode=(2, 2)))
     return x
 
-def discrim(X, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, wy):
+#def discrim(X, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, wy):
+def discrim(X, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wy):
+#def discrim(X, w, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, w6, g6, b6, wy):
     h = lrelu(dnn_conv(X, w, subsample=(2, 2), border_mode=(2, 2)))
     h2 = lrelu(batchnorm(dnn_conv(h, w2, subsample=(2, 2), border_mode=(2, 2)), g=g2, b=b2))
     h3 = lrelu(batchnorm(dnn_conv(h2, w3, subsample=(2, 2), border_mode=(2, 2)), g=g3, b=b3))
     h4 = lrelu(batchnorm(dnn_conv(h3, w4, subsample=(2, 2), border_mode=(2, 2)), g=g4, b=b4))
-    h4 = T.flatten(h4, 2)
-    if LOSS_TYPE=='WGAN':
+    if IMG_SIZE==64:
+        h4 = T.flatten(h4, 2)
         y = T.dot(h4, wy)
-    elif LOSS_TYPE=='GAN':
-        y = sigmoid(T.dot(h4, wy))
+    elif IMG_SIZE==128:
+        h5 = lrelu(batchnorm(dnn_conv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5))   #128
+        h5 = T.flatten(h5, 2)
+        y = T.dot(h5, wy)
+    elif IMG_SIZE==256:
+        h5 = lrelu(batchnorm(dnn_conv(h4, w5, subsample=(2, 2), border_mode=(2, 2)), g=g5, b=b5))   #128
+        h6 = lrelu(batchnorm(dnn_conv(h5, w6, subsample=(2, 2), border_mode=(2, 2)), g=g6, b=b6))   #256
+        h6 = T.flatten(h6, 2)
+        y = T.dot(h6, wy)
+
+    if LOSS_TYPE=='GAN':
+        y = sigmoid(y)
     return y
 
 X = T.tensor4()
@@ -261,7 +319,7 @@ for epoch in range(niter+niter_decay+1):
     n_epochs += 1
     if n_epochs > niter:
         lrt.set_value(floatX(lrt.get_value() - lr/niter_decay))
-    if n_epochs in [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]:
+    if n_epochs in range(0,1000,50):
         joblib.dump([p.get_value() for p in gen_params], os.path.join(model_dir, '%d_gen_params.jl'%n_epochs))
         joblib.dump([p.get_value() for p in discrim_params], os.path.join(model_dir, '%d_discrim_params.jl'%n_epochs))
 
