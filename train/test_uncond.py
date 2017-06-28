@@ -18,10 +18,11 @@ npx = IMG_SIZE          # # of pixels width/height of images
 nz = 100          # # of dim for Z
 ngf = 1024         # # of gen filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
-LOAD_GEN_PATHS = ['./models/_google_car_uncond_dcgan_truck_tmp/200_gen_params.jl', \
-                  './models/_google_car_uncond_dcgan_truck_tmp/400_gen_params.jl', \
-                  './models/_google_car_uncond_dcgan_truck_tmp/600_gen_params.jl', \
-                  './models/_google_car_uncond_dcgan_truck_tmp/800_gen_params.jl']
+exp_id = '_web_car_uncond_dcgan_ambulance_tmp'
+LOAD_GEN_PATHS = ['./models/%s/200_gen_params.jl'%exp_id, \
+                  './models/%s/400_gen_params.jl'%exp_id, \
+                  './models/%s/600_gen_params.jl'%exp_id, \
+                  './models/%s/800_gen_params.jl'%exp_id,]
 NUM_SAMPLE = 500
 
 

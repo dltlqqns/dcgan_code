@@ -9,21 +9,24 @@ from lib import inits
 from lib.rng import py_rng, np_rng
 from lib.ops import batchnorm, conv_cond_concat, deconv, dropout, l2normalize
 from lib.theano_utils import floatX, sharedX
+from lib.data_utils import OneHot
 from sklearn.externals import joblib
 from inception_score import get_inception_score
 
-IMG_SIZE = 128
+IMG_SIZE = 64
+SEL_CLASS = 1   # -1
 nc = 3            # # of channels in image
 npx = IMG_SIZE          # # of pixels width/height of images
 nz = 100          # # of dim for Z
 ngf = 1024         # # of gen filters in first conv layer
-ndf = 64         # # of discrim filters in first conv layer
+ndf = 128         # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
 ny = 5
-LOAD_GEN_PATHS = ['./models/_CUB_200_2011_uncond_dcgan_/200_gen_params.jl', \
-                  './models/_CUB_200_2011_uncond_dcgan_/400_gen_params.jl', \
-                  './models/_CUB_200_2011_uncond_dcgan_/600_gen_params.jl', \
-                  './models/_CUB_200_2011_uncond_dcgan_/800_gen_params.jl']
+exp_id = '_web_car_cond_dcgan_abccc_10000'
+LOAD_GEN_PATHS = ['./models/%s/200_gen_params.jl'%exp_id, \
+                  './models/%s/400_gen_params.jl'%exp_id, \
+                  './models/%s/600_gen_params.jl'%exp_id, \
+                  './models/%s/800_gen_params.jl'%exp_id]
 NUM_SAMPLE = 500
 
 
@@ -89,8 +92,8 @@ gwx = gifn((ng_final, nc, 5, 5), 'gwx')
 
 gen_params = [gw, gg, gb, gw2, gg2, gb2, gw3, gg3, gb3, gw4, gg4, gb4, gwx]
 
-#def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
-def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
+def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
+#def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
 #def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, w6, g6, b6, wx):
     yb = Y.dimshuffle(0, 1, 'x', 'x')
     Z = T.concatenate([Z, Y], axis=1)
@@ -128,14 +131,20 @@ def gen_samples(n, nbatch=128):
     labels = []
     n_gen = 0
     for i in range(n/nbatch):
-        ymb = floatX(OneHot(np_rng.randint(0, 10, nbatch), ny))
+        if SEL_CLASS==-1:
+            ymb = floatX(OneHot(np_rng.randint(0, ny, nbatch), ny))
+        else:
+            ymb = floatX(OneHot(int(SEL_CLASS)*np.ones(nbatch, dtype=np.int), ny))
         zmb = floatX(np_rng.uniform(-1., 1., size=(nbatch, nz)))
         xmb = _gen(zmb, ymb)
         samples.append(xmb)
         labels.append(np.argmax(ymb, axis=1))
         n_gen += len(xmb)
     n_left = n-n_gen
-    ymb = floatX(OneHot(np_rng.randint(0, 10, n_left), ny))
+    if SEL_CLASS==-1:
+        ymb = floatX(OneHot(np_rng.randint(0, ny, n_left), ny))
+    else:
+        ymb = floatX(OneHot(int(SEL_CLASS)*np.ones(n_left, dtype=np.int), ny))
     zmb = floatX(np_rng.uniform(-1., 1., size=(n_left, nz)))
     xmb = _gen(zmb, ymb)
     samples.append(xmb)    
@@ -150,7 +159,7 @@ for load_gen_path in LOAD_GEN_PATHS:
     print("Model is loaded from %s!!"%load_gen_path)
 
     # test
-    samples = gen_samples(NUM_SAMPLE)
+    samples, _ = gen_samples(NUM_SAMPLE)
     samples = [sample for sample in samples]
     score, score_std = get_inception_score(samples)
     print('---score: %f, score_std: %f'%(score, score_std))
