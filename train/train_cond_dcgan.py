@@ -342,7 +342,7 @@ for epoch in range(1, niter+niter_decay+1):
     n_epochs += 1
     if n_epochs > niter:
         lrt.set_value(floatX(lrt.get_value() - lr/niter_decay))
-    if n_epochs in [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]:
+    if n_epochs in range(0,1000,50): 
         joblib.dump([p.get_value() for p in gen_params], os.path.join(model_dir, '%d_gen_params.jl'%n_epochs))
         joblib.dump([p.get_value() for p in discrim_params], os.path.join(model_dir, '%d_discrim_params.jl'%n_epochs))
 
