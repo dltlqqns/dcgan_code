@@ -157,6 +157,8 @@ def load_cond(dataset, classnames, img_size, num_sample_per_class):
     vaY = np.empty(0, dtype=np.int)
 
     for idx, classname in enumerate(classnames):
+        classname = classname.replace(' ','_')
+        print(classname)
         filepath = os.path.join('..', 'Data', dataset, '%dimages_%s.pickle'%(img_size, classname))
         tmp_trX, tmp_vaX, _, _, _, _ = load_uncond(dataset, classname, img_size)
         num_sample_tr = int(min(num_sample_per_class, tmp_trX.shape[0]))
