@@ -13,16 +13,15 @@ from lib.data_utils import OneHot
 from sklearn.externals import joblib
 from inception_score import get_inception_score
 
-IMG_SIZE = 64
+IMG_SIZE = 128 #64
 SEL_CLASS = 1   # -1
 nc = 3            # # of channels in image
 npx = IMG_SIZE          # # of pixels width/height of images
 nz = 100          # # of dim for Z
 ngf = 1024         # # of gen filters in first conv layer
-ndf = 128         # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
 ny = 5
-exp_id = '_web_car_cond_dcgan_abccc_10000'
+exp_id = '128_web_airplane_cond_dcgan_aabbd_10000'
 LOAD_GEN_PATHS = ['./models/%s/200_gen_params.jl'%exp_id, \
                   './models/%s/400_gen_params.jl'%exp_id, \
                   './models/%s/600_gen_params.jl'%exp_id, \
@@ -91,9 +90,17 @@ if IMG_SIZE>=128:
 gwx = gifn((ng_final, nc, 5, 5), 'gwx')
 
 gen_params = [gw, gg, gb, gw2, gg2, gb2, gw3, gg3, gb3, gw4, gg4, gb4, gwx]
+if IMG_SIZE>=128:
+    gen_params.insert(-1, gw5)
+    gen_params.insert(-1, gg5)
+    gen_params.insert(-1, gb5)
+    if IMG_SIZE==256:    
+        gen_params.insert(-1, gw6)
+        gen_params.insert(-1, gg6)
+        gen_params.insert(-1, gb6)
 
-def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
-#def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
+#def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
+def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
 #def gen(Z, Y, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, w6, g6, b6, wx):
     yb = Y.dimshuffle(0, 1, 'x', 'x')
     Z = T.concatenate([Z, Y], axis=1)

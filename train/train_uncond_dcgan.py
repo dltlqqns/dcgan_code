@@ -1,8 +1,8 @@
 EXP_NAME = '128'
 MODEL_NAME = 'uncond_dcgan'
-DATASET = 'web_car' #'cifar-10-batches-py' #'CUB_200_2011'  #'cifar10'
+DATASET = 'web_airplane' #'cifar-10-batches-py' #'CUB_200_2011'  #'cifar10'
 IMG_SIZE = 128 
-CLASSNAME = 'bus' #'truck' #'ship'
+CLASSNAME = 'delta_wing' #'truck' #'ship'
 LOAD_MODEL = '' #'64_cifar10_uncond_dcgan_horse_400'
 BASE_COMPILEDIR = 'tmp/%s_%s_%s_%d'%(DATASET, CLASSNAME, MODEL_NAME, IMG_SIZE)
 GPU_ID = 0

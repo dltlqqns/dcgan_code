@@ -12,13 +12,13 @@ from lib.theano_utils import floatX, sharedX
 from sklearn.externals import joblib
 from inception_score import get_inception_score
 
-IMG_SIZE = 64
+IMG_SIZE = 128 #64
 nc = 3            # # of channels in image
 npx = IMG_SIZE          # # of pixels width/height of images
 nz = 100          # # of dim for Z
 ngf = 1024         # # of gen filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
-exp_id = '_web_car_uncond_dcgan_ambulance_tmp'
+exp_id = '128_web_airplane_uncond_dcgan_delta_wing'
 LOAD_GEN_PATHS = ['./models/%s/200_gen_params.jl'%exp_id, \
                   './models/%s/400_gen_params.jl'%exp_id, \
                   './models/%s/600_gen_params.jl'%exp_id, \
@@ -71,8 +71,8 @@ if IMG_SIZE>=128:
         gen_params.insert(-1, gg6)
         gen_params.insert(-1, gb6)
 
-def gen(Z, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
-#def gen(Z, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
+#def gen(Z, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, wx):
+def gen(Z, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, wx):
 #def gen(Z, w, g, b, w2, g2, b2, w3, g3, b3, w4, g4, b4, w5, g5, b5, w6, g6, b6, wx):
     h = relu(batchnorm(T.dot(Z, w), g=g, b=b))
     h = h.reshape((h.shape[0], ngf, 4, 4))

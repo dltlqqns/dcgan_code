@@ -1,19 +1,19 @@
 EXP_NAME = '128'
 MODEL_NAME = 'cond_dcgan'
-DATASET = 'web_airplane' #'cifar-10-batches-py'  #'cifar10'
+DATASET = 'web_car_cropped' #'cifar-10-batches-py'  #'cifar10'
 IMG_SIZE = 128 #32
 LOAD_MODEL = '' #'64_cifar10_uncond_dcgan_horse_400'
 GPU_ID = 0
 MODEL_DIR = 'models'
 SAMPLES_DIR = 'samples'
 LOSS_TYPE = 'GAN' #'GAN'
-NSAMPLE_PER_CLASS = 10000 #TODO
-#CLASSNAMES = ['ambulance', 'bus', 'cab', 'coupe', 'cruiser']
-#CLASSNAME = 'abccc' #'ship' #??
+NSAMPLE_PER_CLASS = 100000 #TODO
+CLASSNAMES = ['ambulance', 'bus', 'cab', 'coupe', 'cruiser']
+CLASSNAME = 'abccc' #'ship' #??
 #CLASSNAMES = ['eohippus', 'mesohippus', 'pony', 'roan', 'stablemate']
 #CLASSNAME = 'emprs' #'ship' #??
-CLASSNAMES = ['airliner', 'amphibian', 'biplane', 'bomber', 'delta wing']
-CLASSNAME = 'aabbd'
+#CLASSNAMES = ['airliner', 'amphibian', 'biplane', 'bomber', 'delta wing']
+#CLASSNAME = 'aabbd'
 BASE_COMPILEDIR = 'tmp/%s_%s_%s_%d'%(DATASET, CLASSNAME, MODEL_NAME, IMG_SIZE)
 
 k = 1             # # of discrim updates for each gen update
