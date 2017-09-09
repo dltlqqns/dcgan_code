@@ -1,6 +1,6 @@
 EXP_NAME = '128'
 MODEL_NAME = 'cond_dcgan'
-DATASET = 'web_car_cropped' #'cifar-10-batches-py'  #'cifar10'
+DATASET = 'web_airplane_cropped' #'cifar-10-batches-py'  #'cifar10'
 IMG_SIZE = 128 #32
 LOAD_MODEL = '' #'64_cifar10_uncond_dcgan_horse_400'
 GPU_ID = 0
@@ -8,12 +8,12 @@ MODEL_DIR = 'models'
 SAMPLES_DIR = 'samples'
 LOSS_TYPE = 'GAN' #'GAN'
 NSAMPLE_PER_CLASS = 100000 #TODO
-CLASSNAMES = ['ambulance', 'bus', 'cab', 'coupe', 'cruiser']
-CLASSNAME = 'abccc' #'ship' #??
+#CLASSNAMES = ['ambulance', 'bus', 'cab', 'coupe', 'cruiser']
+#CLASSNAME = 'abccc' #'ship' #??
 #CLASSNAMES = ['eohippus', 'mesohippus', 'pony', 'roan', 'stablemate']
 #CLASSNAME = 'emprs' #'ship' #??
-#CLASSNAMES = ['airliner', 'amphibian', 'biplane', 'bomber', 'delta wing']
-#CLASSNAME = 'aabbd'
+CLASSNAMES = ['airliner', 'amphibian', 'biplane', 'bomber', 'delta wing']
+CLASSNAME = 'aabbd'
 BASE_COMPILEDIR = 'tmp/%s_%s_%s_%d'%(DATASET, CLASSNAME, MODEL_NAME, IMG_SIZE)
 
 k = 1             # # of discrim updates for each gen update
@@ -27,8 +27,8 @@ nz = 100          # # of dim for Z
 ngf = 1024        # # of gen filters in first conv layer
 ndf = 64          # # of discrim filters in first conv layer
 nx = npx*npx*nc   # # of dimensions in X
-niter = 300       # # of iter at starting learning rate
-niter_decay = 300 # # of iter to linearly decay learning rate to zero
+niter = 500 #300      # # of iter at starting learning rate
+niter_decay = 500 #300  # # of iter to linearly decay learning rate to zero
 lr = 0.0002       # initial learning rate for adam
 
 import sys

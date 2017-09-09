@@ -8,10 +8,10 @@ from utils import mkdir_p
 import numpy as np
 import platform
 
-DATASET = 'web_car_cropped' #'web_car' #'CUB_200_2011' #'cifar-10-batches-py' #'web5000'
-CLASSNAMES = ['ambulance', 'bus', 'cab', 'coupe', 'cruiser', 'truck']  #'ship'
+DATASET = 'web_airplane_cropped' #'web_car' #'CUB_200_2011' #'cifar-10-batches-py' #'web5000'
+#CLASSNAMES = ['ambulance', 'bus', 'cab', 'coupe', 'cruiser', 'truck']  #'ship'
 #CLASSNAMES = ['eohippus', 'mesohippus', 'pony', 'roan', 'stablemate']
-#CLASSNAMES = ['airliner', 'amphibian', 'biplane', 'bomber', 'delta_wing']
+CLASSNAMES = ['airliner', 'amphibian', 'biplane', 'bomber', 'delta_wing']
 #CLASSNAMES = ['delta_wing']
 IMG_SIZE = 128
 CIFAR_CLASSES = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
